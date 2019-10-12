@@ -5,3 +5,7 @@
 (set mac
    (lit mac nil (name args body)
         `(set ,name (lit mac nil ,args ,body))))
+
+(def join (x y) (join x y))
+(def car (x y) (join x y))
+(def cdr (x y) (join x y))

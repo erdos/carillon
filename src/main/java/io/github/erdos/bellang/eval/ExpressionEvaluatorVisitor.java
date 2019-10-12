@@ -18,6 +18,8 @@ import static io.github.erdos.bellang.objects.Symbol.APPLY;
 import static io.github.erdos.bellang.objects.Symbol.CHARS;
 import static io.github.erdos.bellang.objects.Symbol.GLOBE;
 import static io.github.erdos.bellang.objects.Symbol.INS;
+import static io.github.erdos.bellang.objects.Symbol.JOIN;
+import static io.github.erdos.bellang.objects.Symbol.LIT;
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.O;
 import static io.github.erdos.bellang.objects.Symbol.OUTS;
@@ -112,31 +114,47 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	}
 
 	private Expression evalFnCall(Pair expression) {
-		// TODO: sorban kiertekelunk mindent.
-		// ha az elso elemn fn literal, akkor a body reszt evalualjuk frissitett bindingekkel.
 
 		if (expression.isEmpty()) {
 			throw new EvaluationException(expression, "Can not evaluate empty list!");
 		}
 
-		List<Expression> args = new LinkedList<>();
-
 		Expression head = this.appliedTo(expression.car());
-		if (!isLit(head)) throw new EvaluationException(args.get(0), "Not a function!");
+
+		if (! (head instanceof Pair)) {
+			throw new EvaluationException(head, "Expected pair, got: " + head);
+		}
+
+		// itt az a gond, hogy valtozobol jon a parancs, amirol kiderul, hogy
 
 		boolean macro =  ((Pair) head).cadr() == Symbol.MAC;
 
-		Expression params = ((Pair) head).cadddr();
-		Expression body = ((Pair) head).caddddr();
-
-		if (macro) {
-			assert ((Pair) head).cadr() == Symbol.MAC;
-			env.pushLexicals(mapArgs(params, (Pair) expression.cdr(), x->x));
-		} else {
-			assert ((Pair) head).cadr() == Symbol.CLO;
-			env.pushLexicals(mapArgs(params, (Pair) expression.cdr(), this::appliedTo));
+		try {
+			if (macro) {
+				assert ((Pair) head).cadr() == Symbol.MAC;
+				return this.appliedTo(evalFnCallImpl((Pair) head, expression.cdr(), x -> x));
+			} else {
+				assert ((Pair) head).cadr() == Symbol.CLO;
+				return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
+			}
+		} catch (EvaluationException e) {
+			throw e;
 		}
+	}
 
+	private Expression evalFnCallImpl(Pair fn, Expression bodies, Function<Expression, Expression> argsFn) {
+		assert fn.car() == LIT;
+
+		Expression params = fn.cadddr();
+		Expression body = fn.caddddr();
+
+		try {
+			env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
+
+		} catch (EvaluationException e) {
+			System.out.println("Could not map args for: " + params + "  /  " + bodies + "    " + fn);
+			throw e;
+		}
 		Expression result;
 		try {
 			result = appliedTo(body);
@@ -144,9 +162,6 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			env.popLexicals();
 		}
 
-		if (macro) {
-			result = appliedTo(result);
-		}
 		return result;
 	}
 
@@ -197,12 +212,21 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	public Expression symbol(Symbol symbol) {
 		if (symbol == T || symbol == NIL || symbol == O || symbol == APPLY) {
 			return symbol;
-		} else if (symbol == CHARS) {
+		}
+		//else if (symbol == JOIN) {
+			// TODO: not sure if it is semantically correct.
+		//	return symbol;
+		//}
+		else if (symbol == CHARS) {
 			return Constants.CHARS_LIST;
 		} else if (symbol == GLOBE) {
 			throw new RuntimeException("Can not use globe yet.");
 		} else if (symbol == SCOPE) {
-			throw new RuntimeException("Can not use scope yet.");
+			Expression tail = NIL;
+			for (Map.Entry<String, Expression> entry : env.getLexicalScope().entrySet()) {
+				tail = RT.pair(RT.pair(Symbol.symbol(entry.getKey()), entry.getValue()), tail);
+			}
+			return tail;
 		} else if (symbol == INS) {
 			throw new RuntimeException("Can not use ins yet.");
 		} else if (symbol == OUTS) {

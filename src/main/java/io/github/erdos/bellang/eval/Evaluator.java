@@ -66,6 +66,16 @@ public class Evaluator {
 		return null;
 	}
 
+	public Map<String, Expression> getLexicalScope() {
+		Map<String, Expression> map = new HashMap<>();
+		for (Map<String, Expression> m : lexicals) {
+			for (Map.Entry<String, Expression> entry : m.entrySet()) {
+				map.putIfAbsent(entry.getKey(), entry.getValue());
+			}
+		}
+		return map;
+	}
+
 	public Expression getDynamicBinding(Symbol s) {
 		return dynamicBindings.get().get(s.name);
 	}

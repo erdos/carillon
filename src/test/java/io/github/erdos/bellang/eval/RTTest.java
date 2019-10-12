@@ -1,6 +1,7 @@
 package io.github.erdos.bellang.eval;
 
 import io.github.erdos.bellang.objects.Expression;
+import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Symbol;
 import io.github.erdos.bellang.reader.Reader;
 import org.junit.Ignore;
@@ -47,8 +48,7 @@ class RTTest {
 
 	@Test
 	public void testCar() throws IOException {
-		Expression expression = read("(car '(a b))");
-		assertEquals(symbol("a"), RT.eval(expression));
+		assertEquals(symbol("a"), RT.eval(read("(car '(a b))")));
 	}
 
 	@Test
@@ -86,6 +86,9 @@ class RTTest {
 	public void if2() throws IOException {
 		assertEquals(read("b"), RT.eval(read("(if nil 'a 't 'b)")));
 		assertEquals(read("a"), RT.eval(read("(if 't 'a)")));
+		assertEquals(read("a"), RT.eval(read("(if 't 'a 'b)")));
+		assertEquals(read("b"), RT.eval(read("(if nil 'a 'b)")));
+
 		assertEquals(read("nil"), RT.eval(read("(if nil 'a)")));
 		assertEquals(read("nil"), RT.eval(read("(if nil 'a nil 'b)")));
 	}
@@ -94,6 +97,25 @@ class RTTest {
 	public void testDef() throws IOException {
 		RT.eval(read("(def a (x) (join x x))"));
 		assertEquals(pair(symbol("x"), symbol("x")), RT.eval(read("(a 'x)")));
+	}
+
+	@Test
+	public void testDef2() throws IOException {
+		RT.eval(read("(def a (x) (x 'b 'c))")); // a (reduce join ns) teljesen valid scenario!
+		System.out.println(RT.eval(read("(a join)")));
+	}
+
+	@Test
+	public void testApply() throws IOException {
+		assertEquals(Pair.EMPTY, RT.eval(read("(apply join)")));
+		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join '())")));
+
+		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join nil)")));
+
+		Expression result1 = RT.eval(read("(apply join '(a b))"));
+		Expression result2 = RT.eval(read("(apply join 'a '(b))"));
+		assertEquals(result1, read("(a . b)"));
+		assertEquals(result2, read("(a . b)"));
 	}
 
 	@Test
