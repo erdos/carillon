@@ -99,6 +99,18 @@ class ReaderTest {
 		assertEquals(expected, result);
 	}
 
+	@Test
+	public void testDot1() throws IOException {
+		Expression result = read("((a . b) x)");
+		assertEquals(list(pair(symbol("a"), symbol("b")), symbol("x")), result);
+	}
+
+	@Test
+	public void testDot2() throws IOException {
+		Expression result = read("(a b . c)");
+		assertEquals(pair(symbol("a"), pair(symbol("b"), symbol("c"))), result);
+	}
+
 	private static Expression read(String s) throws IOException {
 		return new Reader().read(new PushbackReader(new StringReader(s)));
 	}

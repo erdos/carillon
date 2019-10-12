@@ -7,9 +7,12 @@ import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Stream;
 import io.github.erdos.bellang.objects.Symbol;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 import static io.github.erdos.bellang.objects.Symbol.APPLY;
 import static io.github.erdos.bellang.objects.Symbol.CHARS;
@@ -118,25 +121,20 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		if (!isLit(head)) throw new EvaluationException(args.get(0), "Not a function!");
 
 		boolean macro =  ((Pair) head).cadr() == Symbol.MAC;
-		Iterator<Expression> iterator = expression.iterator();
-		iterator.next();
-
-		if (macro) {
-			assert ((Pair) head).cadr() == Symbol.MAC;
-			iterator.forEachRemaining(e -> args.add(e));
-		} else {
-			assert ((Pair) head).cadr() == Symbol.CLO;
-			iterator.forEachRemaining(e -> args.add(this.appliedTo(e)));
-		}
 
 		Pair params = (Pair) ((Pair) head).cadddr();
 		Expression body = ((Pair) head).caddddr();
 
-		env.pushLexicals((Iterable<Symbol>) (Iterable) params, args);
+		if (macro) {
+			assert ((Pair) head).cadr() == Symbol.MAC;
+			env.pushLexicals(mapArgs(params, (Pair) expression.cdr(), x->x));
+		} else {
+			assert ((Pair) head).cadr() == Symbol.CLO;
+			env.pushLexicals(mapArgs(params, (Pair) expression.cdr(), this::appliedTo));
+		}
+
 		Expression result;
 		try {
-			// expression;
-			System.out.println("Evaluating body: " + body);
 			result = appliedTo(body);
 		} finally {
 			env.popLexicals();
@@ -145,6 +143,30 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		if (macro) {
 			result = appliedTo(result);
 		}
+		return result;
+	}
+
+	private Map<String, Expression> mapArgs(Expression names, Pair values, Function<Expression, Expression> mapper) {
+
+		Map<String, Expression> result = new HashMap<>();
+
+		while (names != NIL) {
+			if (names instanceof Symbol) {
+				result.put(((Symbol) names).name, values);
+			} else {
+				Pair name = (Pair) names;
+				result.put(((Symbol)name.car()).name, values.car());
+
+				if (values.cdr() == NIL) {
+					assert name.cdr() == NIL;
+					break;
+				} else {
+					names = name.cdr();
+					values = (Pair) values.cdr();
+				}
+			}
+		}
+
 		return result;
 	}
 

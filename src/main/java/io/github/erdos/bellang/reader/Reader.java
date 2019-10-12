@@ -117,33 +117,38 @@ public class Reader {
 	static Pair readPair(PushbackReader pbr) throws IOException {
 		if (!expectCharacter(pbr, '(')) {
 			return null;
-		} else if (expectClose(pbr)) {
+		} else if (expectCharacter(pbr, ')')) {
 			return Pair.EMPTY;
 		} else {
 			Deque<Expression> expressions = new LinkedList<>();
 
-			Expression first = read(pbr);
-			expressions.push(first);
+			expressions.push(read(pbr));
 
 			skipWhitespaces(pbr);
-			if (expectDot(pbr)) {
-				Expression second = read(pbr);
-				return pair(first, second);
-			} else {
-				while (!expectClose(pbr)) {
-						expressions.push(read(pbr));
-						skipWhitespaces(pbr);
+
+			Expression last = NIL;
+			while (!expectCharacter(pbr, ')')) {
+				if (expectCharacter(pbr, '.')) {
+					last = read(pbr);
+					skipWhitespaces(pbr);
+					if (!expectCharacter(pbr, ')')) {
+						throw new IllegalStateException("Expecting ) parentheses!");
+					} else {
+						break;
+					}
+				} else {
+					Expression e = read(pbr);
+					skipWhitespaces(pbr);
+					expressions.push(e);
 				}
-
-				Pair tail = null;
-				for (Expression e : expressions) {
-					assert e != null;
-					tail = pair(e, tail == null ? NIL : tail);
-				}
-
-				return tail;
-
 			}
+
+			for (Expression e : expressions) {
+				assert e != null;
+				last = pair(e, last);
+			}
+
+			return (Pair) last;
 		}
 	}
 
@@ -216,15 +221,6 @@ public class Reader {
 		} else {
 			return true;
 		}
-	}
-
-	private static boolean expectClose(PushbackReader pbr) throws IOException {
-		return expectCharacter(pbr, ')');
-	}
-
-	private static boolean expectDot(PushbackReader pbr) throws IOException {
-		skipWhitespaces(pbr);
-		return expectCharacter(pbr, '.');
 	}
 
 	private static boolean expectBackslash(PushbackReader pbr) throws IOException {

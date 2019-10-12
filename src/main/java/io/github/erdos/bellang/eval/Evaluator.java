@@ -73,18 +73,8 @@ public class Evaluator {
 
 	private final Deque<Map<String, Expression>> lexicals = new ArrayDeque<>();
 
-	public void pushLexicals(Iterable<Symbol> names, Iterable<Expression> values) {
-		Iterator<Symbol> name = names.iterator();
-		Iterator<Expression> value = values.iterator();
-
-		System.out.println("Pushing lexicals!" + names + " - " + values);
-
-		Map<String, Expression> bind = new HashMap<>();
-		while (name.hasNext()) {
-			// TODO: ha value nezt nincs, akkor null!
-			bind.put(name.next().name, value.next());
-		}
-		lexicals.push(bind);
+	public void pushLexicals(Map<String, Expression> lexicalMapping) {
+		lexicals.push(lexicalMapping);
 	}
 
 	public void popLexicals() {
