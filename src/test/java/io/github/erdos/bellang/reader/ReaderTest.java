@@ -60,6 +60,13 @@ class ReaderTest {
 	}
 
 	@Test
+	public void testFnShorthand2() throws IOException {
+		Expression result = read("[no (f _ x)]");
+		Expression result2 = read("()");
+		assertEquals(result, result2);
+	}
+
+	@Test
 	public void readQuotedShorthand() throws IOException {
 		Expression expected = quote(symbol("alabama"));
 

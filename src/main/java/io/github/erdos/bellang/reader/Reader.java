@@ -153,6 +153,14 @@ public class Reader {
 		}
 	}
 
+	static boolean identifierStart(char read) {
+		return java.lang.Character.isJavaIdentifierStart(read) || read == '=';
+	}
+
+	static boolean identifierPart(char read) {
+		return java.lang.Character.isJavaIdentifierPart(read) || read == '|' || read == '.' || read == '!'|| read == '=';
+	}
+
 	public static Expression readSymbol(PushbackReader pbr) throws IOException {
 		int read = pbr.read();
 
@@ -160,13 +168,13 @@ public class Reader {
 			throw new EOFException();
 		}
 
-		if (!java.lang.Character.isJavaIdentifierStart(read)) {
+		if (!identifierStart((char) read)) {
 			pbr.unread(read);
 			return null;
 		} else {
 
 			StringBuilder builder = new StringBuilder();
-			while (java.lang.Character.isJavaIdentifierPart(read) || read == '|' || read == '.' || read == '!') {
+			while (identifierPart((char) read)) {
 				builder.append((char) read);
 
 				read = pbr.read();

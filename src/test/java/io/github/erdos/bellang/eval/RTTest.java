@@ -126,7 +126,8 @@ class RTTest {
 		     InputStreamReader reader = new InputStreamReader(stream);
 		     PushbackReader pbr = new PushbackReader(reader)) {
 
-			for(int i = 0; i < 30; i++) {
+			for(int i = 0; i < 100; i++) {
+				System.out.println("reading...");
 				Expression e = Reader.read(pbr);
 				System.out.println("    " + i);
 				System.out.println("Evaling " + e);
