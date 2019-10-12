@@ -1,0 +1,3 @@
+(set def
+     (lit mac nil (name args body)
+          `(set ,name (lit clo nil ,args ,body))))
