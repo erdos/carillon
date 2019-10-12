@@ -83,6 +83,14 @@ class RTTest {
 	}
 
 	@Test
+	public void if2() throws IOException {
+		assertEquals(read("b"), RT.eval(read("(if nil 'a 't 'b)")));
+		assertEquals(read("a"), RT.eval(read("(if 't 'a)")));
+		assertEquals(read("nil"), RT.eval(read("(if nil 'a)")));
+		assertEquals(read("nil"), RT.eval(read("(if nil 'a nil 'b)")));
+	}
+
+	@Test
 	public void testDef() throws IOException {
 		RT.eval(read("(def a (x) (join x x))"));
 		assertEquals(pair(symbol("x"), symbol("x")), RT.eval(read("(a 'x)")));
@@ -96,7 +104,7 @@ class RTTest {
 		     InputStreamReader reader = new InputStreamReader(stream);
 		     PushbackReader pbr = new PushbackReader(reader)) {
 
-			for(int i = 0; i < 10; i++) {
+			for(int i = 0; i < 30; i++) {
 				Expression e = Reader.read(pbr);
 				System.out.println("    " + i);
 				System.out.println("Evaling " + e);

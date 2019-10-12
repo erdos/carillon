@@ -7,7 +7,22 @@ import io.github.erdos.bellang.objects.Symbol;
 public class SpecialForms {
 	public Expression evalIf(Pair cond, ExpressionEvaluatorVisitor visitor) {
 		assert Symbol.IF.equals(cond.car());
-		return null;
+
+		cond = (Pair) cond.cdr();
+
+		while (cond != null) {
+			Expression evaled = visitor.appliedTo(cond.car());
+
+			if (evaled != Symbol.NIL) {
+				return visitor.appliedTo(cond.cadr());
+			} else if (((Pair) cond.cdr()).cdr() == Symbol.NIL) {
+				break;
+			} else {
+				cond = (Pair) ((Pair) cond.cdr()).cdr();
+			}
+		}
+
+		return Symbol.NIL;
 	}
 
 	public Expression evalQuote(Pair quoted) {

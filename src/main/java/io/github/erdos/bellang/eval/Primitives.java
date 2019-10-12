@@ -20,7 +20,7 @@ public class Primitives {
 		if (evaluator.appliedTo(args.car()) == evaluator.appliedTo(((Pair) args.cdr()).car())) {
 			return Symbol.T;
 		} else {
-			return null;
+			return NIL;
 		}
 	}
 
@@ -126,12 +126,13 @@ public class Primitives {
 	Expression sys(Pair pair, ExpressionEvaluatorVisitor evaluator) {
 		assert Symbol.SYS.equals(pair.car());
 
-		try {
+/*		try {
 			java.lang.Runtime.getRuntime().exec(((Symbol) pair.cadr().apply(evaluator)).name);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
-		}
-		return null;
+		}*/
+throw new RuntimeException("Not yet implemented!");
+//		return null;
 	}
 
 	/**

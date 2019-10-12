@@ -100,6 +100,13 @@ class ReaderTest {
 	}
 
 	@Test
+	public void testReadBackticket2() throws IOException {
+		Expression result = read("`(a b ,@ds)");
+		Expression expected = read("(join 'a (join 'b ds))");
+		assertEquals(expected, result);
+	}
+
+	@Test
 	public void testDot1() throws IOException {
 		Expression result = read("((a . b) x)");
 		assertEquals(list(pair(symbol("a"), symbol("b")), symbol("x")), result);

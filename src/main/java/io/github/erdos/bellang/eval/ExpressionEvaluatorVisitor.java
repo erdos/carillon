@@ -32,12 +32,16 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	public Expression appliedTo(Expression param) {
 		assert param != null;
-		return param.apply(this);
+		Expression result = param.apply(this);
+		if (result == null) {
+			throw new RuntimeException("Appliedm to  " + param);
+		}
+		assert result != null;
+		return result;
 	}
 
 	@Override
 	public Expression pair(Pair pair) {
-
 		Expression sym = pair.car();
 
 		if (Symbol.IF.equals(sym)) {
@@ -122,7 +126,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		boolean macro =  ((Pair) head).cadr() == Symbol.MAC;
 
-		Pair params = (Pair) ((Pair) head).cadddr();
+		Expression params = ((Pair) head).cadddr();
 		Expression body = ((Pair) head).caddddr();
 
 		if (macro) {
@@ -146,16 +150,17 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		return result;
 	}
 
-	private Map<String, Expression> mapArgs(Expression names, Pair values, Function<Expression, Expression> mapper) {
+	private static Map<String, Expression> mapArgs(Expression names, Pair values, Function<Expression, Expression> mapper) {
 
 		Map<String, Expression> result = new HashMap<>();
 
 		while (names != NIL) {
 			if (names instanceof Symbol) {
-				result.put(((Symbol) names).name, values);
+				result.put(((Symbol) names).name, map(values, mapper));
+				break;
 			} else {
 				Pair name = (Pair) names;
-				result.put(((Symbol)name.car()).name, values.car());
+				result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
 
 				if (values.cdr() == NIL) {
 					assert name.cdr() == NIL;
@@ -170,13 +175,22 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		return result;
 	}
 
+	private static Expression map(Expression p, Function<Expression, Expression> f) {
+		if (p == NIL) {
+			return NIL;
+		} else {			// TODO: remove recursion!
+			Pair pair = (Pair) p;
+			return RT.pair(f.apply(pair.car()), map(pair.cdr(), f));
+		}
+	}
+
 	private static boolean isLit(Expression e) {
 		return e instanceof Pair && ((Pair) e).car() == Symbol.LIT;
 	}
 
 	@Override
 	public Expression stream(Stream stream) {
-		return null;
+		throw new RuntimeException("Stream not supported yet!");
 	}
 
 	@Override

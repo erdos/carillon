@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -25,14 +27,8 @@ public class RT {
 		try (InputStream stream = RT.class.getResourceAsStream("/prelude.bel");
 		     InputStreamReader reader = new InputStreamReader(stream);
 		     PushbackReader pbr = new PushbackReader(reader)) {
-			Expression e;
 
-			eval(Reader.read(pbr));
-
-/*			while ((e = Reader.read(pbr)) != null) {
-				System.out.println("Evaluating " + e);
-				eval(e);
-			}*/
+			for (Expression e; (e = Reader.read(pbr)) != null; eval(e)) ;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -67,7 +63,10 @@ public class RT {
 	}
 
 	public static Pair list(Iterable<? extends Expression> coll) {
-		Stack<Expression> es = new Stack<>();
+
+		assert coll.iterator().hasNext();
+
+		Deque<Expression> es = new LinkedList<>();
 		coll.forEach(es::push);
 
 		Pair p = null;
@@ -77,19 +76,7 @@ public class RT {
 		return p;
 	}
 
-	// (def n p e) -> (set n (lit clo nil p e))
-
-	// (mac n p e) -> (set n (lit mac (lit clo nil p e)))
-
-	public static Pair fn(List<Symbol> args, Expression body) {
-		return list(LIT, CLO, null, list(args), body);
-	}
-
 	public static Pair quote(Expression body) {
 		return list(QUOTE, body);
-	}
-
-	public static Pair lit(Expression body) {
-		return list(LIT, body);
 	}
 }

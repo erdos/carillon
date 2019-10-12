@@ -28,8 +28,9 @@ public class Reader {
 	private final Map<Integer, Pair> sharedPairs = new HashMap<>();
 
 	public static Expression read(PushbackReader pbr) throws IOException {
-		skipWhitespaces(pbr);
-		skipComment(pbr);
+		if (!canReadExpr(pbr)) {
+			return null;
+		}
 
 		Expression e = readSymbol(pbr);
 		if (e != null) {
@@ -197,6 +198,24 @@ public class Reader {
 
 		if (i != -1) {
 			pbr.unread(i);
+		}
+	}
+
+	private static boolean canReadExpr(PushbackReader pbr) throws IOException {
+		while(true) {
+			int i = pbr.read();
+
+			if (i == -1) {
+				return false;
+			} else if (i == ';') {
+				pbr.unread(i);
+				skipComment(pbr);
+			} else if (java.lang.Character.isWhitespace(i)) {
+				skipWhitespaces(pbr);
+			} else {
+				pbr.unread(i);
+				return true;
+			}
 		}
 	}
 
