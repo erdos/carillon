@@ -96,7 +96,7 @@ public class Reader {
 				tail = pair(e, tail);
 			}
 
-			return RT.list(Symbol.FN, RT.list(symbol("_")), RT.pair(f, RT.pair(underscore, tail)));
+			return RT.list(symbol("fn"), RT.list(symbol("_")), RT.pair(f, RT.pair(underscore, tail)));
 
 		} else {
 			return null;

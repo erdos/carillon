@@ -57,6 +57,19 @@ class RTTest {
 		assertEquals(list(symbol("b")), RT.eval(expression));
 	}
 
+
+	@Test
+	public void asdf() throws IOException {
+		assertEquals(symbol("x"), RT.eval(read("((fn (a) a)  'x)")));
+	}
+
+
+	@Test
+	public void dfdf() throws IOException {
+		//  ????
+		assertEquals(symbol("x"), RT.eval(read("((fn (f a) (f a)) quote 'x)")));
+	}
+
 	@Test
 	public void specialSymbolsEvalToThemselves() {
 		assertEquals(symbol("t"), RT.eval(symbol("t")));
@@ -138,6 +151,28 @@ class RTTest {
 	public void testFunctionReturnsFunction() throws IOException {
 		RT.eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
 		System.out.println(RT.eval(read("(a 'f)")));
+	}
+
+//	@Ignore
+//	@Test
+	public void testlet() throws IOException {
+		Expression read = read("(testlet a 1 (join a a))");
+		System.out.println("> " + read);
+		System.out.println(RT.eval(read));
+	}
+
+	@Test
+	public void testClosurePreservesBinding() throws IOException {
+		assertEquals(read("x"), RT.eval(read("((let a 'x (fn v a)) 'y)")));
+	}
+
+	@Test
+	public void defLast() throws IOException {
+		Expression read = read("(def last (xs) (if (id (cdr xs) nil) (car xs) (last (cdr xs))        )   )");
+		System.out.println("> " + read);
+		System.out.println(RT.eval(read));
+		System.out.println(RT.eval(read("(last '(a b c d))")));
+
 	}
 
 	@Test

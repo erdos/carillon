@@ -36,6 +36,16 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	public Expression pair(Pair pair) {
 		Expression sym = pair.car();
 
+		// TODO: maybe remove it!
+		if (Symbol.symbol("err") == sym) {
+			Expression expression = appliedTo(pair.cadr());
+
+			if (expression != NIL) throw new EvaluationException(expression, "Err called!");
+
+			return expression;
+		}
+
+
 		if (Symbol.IF.equals(sym)) {
 			return specialForms.evalIf(pair, this);
 		}
@@ -110,7 +120,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			throw new EvaluationException(expression, "Can not evaluate empty list!");
 		}
 
-		Expression head = this.appliedTo(expression.car());
+		Expression head = expression.car().apply(this);
 
 		if (! (head instanceof Pair)) {
 			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression + " scope=" + env.getLexicalScope() + " ");
@@ -129,20 +139,36 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
-	private Expression evalFnCallImpl(Pair fn, Expression bodies, Function<Expression, Expression> argsFn) {
+	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsFn) {
 		assert fn.car() == LIT;
 		assert fn.cadr() == Symbol.CLO;
 
-		Expression params = fn.cadddr(); // fourth elem
+
+
+
+		Expression paramDeclarations = fn.cadddr(); // fourth elem
 		Expression body = fn.caddddr();
 
-		if (bodies == NIL) {
-			env.pushLexicals(mapArgsEmpty(params));
+		Map<String, Expression> localScope;
+		if (passedParamValues == NIL) {
+			localScope = (mapArgsEmpty(paramDeclarations));
 		} else {
-			env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
+			localScope = (mapArgs(paramDeclarations, (Pair) passedParamValues, argsFn));
 		}
+
+		Expression closureScope = fn.caddr(); // fourth elem
+		if (closureScope != NIL) {
+			((Pair) closureScope).forEach(binding -> {
+				localScope.putIfAbsent(((Symbol)((Pair) binding).car()).name,((Pair) binding).cdr());
+			});
+		}
+
+		env.pushLexicals(localScope);
 		try {
-			return appliedTo(body);
+			// System.out.println("1. " + body);
+			// System.out.println("2. " + fn);
+
+			return body.apply(this);
 		} finally {
 			env.popLexicals();
 		}
@@ -172,9 +198,6 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				break;
 			} else {
 				Pair name = (Pair) names;
-
-
-
 
 				if ((name.car() instanceof Symbol)) {
 					result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
