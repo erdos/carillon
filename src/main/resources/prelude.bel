@@ -1,11 +1,14 @@
 (set def
-     (lit mac nil (name args body)
-          `(set ,name (lit clo nil ,args ,body))))
+     (lit mac (lit clo nil (name args body)
+          `(set ,name (lit clo nil ,args ,body)))))
 
 (set mac
-   (lit mac nil (name args body)
-        `(set ,name (lit mac nil ,args ,body))))
+   (lit mac (lit clo nil (name args body)
+        `(set ,name (lit mac (lit clo nil ,args ,body))))))
 
 (def join (x y) (join x y))
-(def car (x y) (join x y))
-(def cdr (x y) (join x y))
+(def car (x y) (car x y))
+(def cdr (x y) (cdr x y))
+
+(mac quote (x) (join 'quote (join x nil)))
+(mac lit (x) (join 'lit (join x nil)))

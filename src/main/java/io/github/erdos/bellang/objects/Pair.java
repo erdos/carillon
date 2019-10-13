@@ -116,7 +116,11 @@ public final class Pair implements Expression, Iterable<Expression> {
 
 	// third elem
 	public Expression caddr() {
-		return ((Pair) ((Pair) second).second).first;
+		return next().next().first;
+	}
+
+	public Pair next() {
+		return ((Pair) second);
 	}
 
 	public Expression cadddr() {

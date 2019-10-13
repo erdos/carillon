@@ -7,8 +7,6 @@ import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Stream;
 import io.github.erdos.bellang.objects.Symbol;
 
-import java.io.IOException;
-
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 
 public class Primitives {

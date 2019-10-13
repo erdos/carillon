@@ -8,9 +8,6 @@ import io.github.erdos.bellang.objects.Stream;
 import io.github.erdos.bellang.objects.Symbol;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -18,7 +15,6 @@ import static io.github.erdos.bellang.objects.Symbol.APPLY;
 import static io.github.erdos.bellang.objects.Symbol.CHARS;
 import static io.github.erdos.bellang.objects.Symbol.GLOBE;
 import static io.github.erdos.bellang.objects.Symbol.INS;
-import static io.github.erdos.bellang.objects.Symbol.JOIN;
 import static io.github.erdos.bellang.objects.Symbol.LIT;
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.O;
@@ -110,10 +106,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return set(pair);
 		}
 
-		return evalFnCall(pair);
+		return evalLitCall(pair);
 	}
 
-	private Expression evalFnCall(Pair expression) {
+	private Expression evalLitCall(Pair expression) {
 
 		if (expression.isEmpty()) {
 			throw new EvaluationException(expression, "Can not evaluate empty list!");
@@ -125,43 +121,53 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			throw new EvaluationException(head, "Expected pair, got: " + head);
 		}
 
-		// itt az a gond, hogy valtozobol jon a parancs, amirol kiderul, hogy
+		if (((Pair) head).cadr() == Symbol.MAC) {
+			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
+			return this.appliedTo(evalFnCallImpl(nestedClo, expression.cdr(), x -> x));
 
-		boolean macro =  ((Pair) head).cadr() == Symbol.MAC;
-
-		try {
-			if (macro) {
-				assert ((Pair) head).cadr() == Symbol.MAC;
-				return this.appliedTo(evalFnCallImpl((Pair) head, expression.cdr(), x -> x));
-			} else {
-				assert ((Pair) head).cadr() == Symbol.CLO;
-				return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
-			}
-		} catch (EvaluationException e) {
-			throw e;
+		} else if (((Pair) head).cadr() == Symbol.CLO) {
+			assert ((Pair) head).cadr() == Symbol.CLO;
+			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
+		} else {
+			throw new IllegalArgumentException("We only evaluate MAC or CLO literals!");
 		}
 	}
 
 	private Expression evalFnCallImpl(Pair fn, Expression bodies, Function<Expression, Expression> argsFn) {
 		assert fn.car() == LIT;
+		assert fn.cadr() == Symbol.CLO;
 
-		Expression params = fn.cadddr();
+		Expression params = fn.cadddr(); // fourth elem
 		Expression body = fn.caddddr();
 
 		try {
-			env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
-
+			if (bodies == NIL) {
+				env.pushLexicals(mapArgsEmpty(params));
+			} else {
+				env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
+			}
 		} catch (EvaluationException e) {
 			System.out.println("Could not map args for: " + params + "  /  " + bodies + "    " + fn);
 			throw e;
 		}
-		Expression result;
 		try {
-			result = appliedTo(body);
+			return appliedTo(body);
 		} finally {
 			env.popLexicals();
 		}
+	}
 
+	private static Map<String, Expression> mapArgsEmpty(Expression names) {
+		Map<String, Expression> result = new HashMap<>();
+		while (names != NIL) {
+			if (names instanceof  Symbol) {
+				result.put(((Symbol) names).name, NIL);
+				break;
+			} else {
+				result.put( ((Symbol) ((Pair)names).car()).name, NIL);
+				names = ((Pair)names).cdr();
+			}
+		}
 		return result;
 	}
 
@@ -178,7 +184,15 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
 
 				if (values.cdr() == NIL) {
-					assert name.cdr() == NIL;
+					while (name.cdr() != NIL) {
+						if (name.cdr() instanceof Pair) {
+							result.put(((Symbol) name.cadr()).name, NIL);
+							name = (Pair) name.cdr();
+						} else {
+							result.put(((Symbol) name.cdr()).name, NIL);
+							break;
+						}
+					}
 					break;
 				} else {
 					names = name.cdr();

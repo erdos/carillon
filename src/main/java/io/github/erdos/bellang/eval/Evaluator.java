@@ -6,8 +6,6 @@ import io.github.erdos.bellang.objects.Symbol;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,7 +22,6 @@ public class Evaluator {
 	 * global binding for it.
 	 */
 	public void set(Symbol s, Expression e) {
-		// System.out.println("Setting " + s + " = " + e);
 		if (dynamicBindings.get().containsKey(s.name)) {
 			dynamicBindings.get().put(s.name, e);
 		} else if (getLexicalBinding(s) != null) {

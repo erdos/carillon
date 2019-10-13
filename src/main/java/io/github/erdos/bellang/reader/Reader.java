@@ -13,6 +13,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Stack;
 
 import static io.github.erdos.bellang.eval.RT.list;
 import static io.github.erdos.bellang.eval.RT.pair;
@@ -72,23 +73,31 @@ public class Reader {
 
 	private static Expression readFnAbbreviation(PushbackReader pbr) throws IOException {
 		if (expectCharacter(pbr, '[')) {
-			Expression f = readSymbol(pbr);
+			Expression f = read(pbr);
 			assert f != null;
 
 			skipWhitespaces(pbr);
 
-			Expression underscore = readSymbol(pbr);
+			Expression underscore = read(pbr);
 			assert underscore != null;
 
 			skipWhitespaces(pbr);
 
-			Expression expr = read(pbr);
-			assert expr != null;
-
-			if (!expectCharacter(pbr, ']')) {
-				throw new IllegalStateException("Expected ']' character!" + (char) pbr.read());
+			Deque<Expression> stack = new LinkedList<>();
+			while (!expectCharacter(pbr, ']')) {
+				Expression read = read(pbr);
+				assert read != null;
+				stack.push(read);
 			}
-			return RT.list(Symbol.FN, RT.list(underscore), RT.list(f, underscore, expr));
+
+			Expression tail = NIL;
+
+			for (Expression e : stack) {
+				tail = pair(e, tail);
+			}
+
+			return RT.list(Symbol.FN, RT.list(underscore), RT.pair(f, RT.pair(underscore, tail)));
+
 		} else {
 			return null;
 		}
@@ -154,11 +163,11 @@ public class Reader {
 	}
 
 	static boolean identifierStart(char read) {
-		return java.lang.Character.isJavaIdentifierStart(read) || read == '=';
+		return java.lang.Character.isJavaIdentifierStart(read) || read == '=' || read == '-';
 	}
 
 	static boolean identifierPart(char read) {
-		return java.lang.Character.isJavaIdentifierPart(read) || read == '|' || read == '.' || read == '!'|| read == '=';
+		return java.lang.Character.isJavaIdentifierPart(read) || read == '|' || read == '.' || read == '!'|| read == '=' || read == '-';
 	}
 
 	public static Expression readSymbol(PushbackReader pbr) throws IOException {

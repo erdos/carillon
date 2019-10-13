@@ -94,9 +94,36 @@ class RTTest {
 	}
 
 	@Test
-	public void testDef() throws IOException {
+	public void testMacUnary() throws IOException {
+		RT.eval(read("(mac a (x) (join 'quote (join x nil)))"));
+		assertEquals(read("x"), RT.eval(read("(a x)")));
+	}
+
+
+	@Test
+	public void testDefUnary() throws IOException {
 		RT.eval(read("(def a (x) (join x x))"));
 		assertEquals(pair(symbol("x"), symbol("x")), RT.eval(read("(a 'x)")));
+	}
+
+	@Test
+	public void testCallLessArgs() throws IOException {
+		RT.eval(read("(def a (x y z) (join z (join y x)))"));
+		assertEquals(read("(nil  nil . f)"), RT.eval(read("(a 'f)")));
+	}
+
+	@Test
+	public void testCallVarargs() throws IOException {
+		RT.eval(read("(def a (x . xs) xs)"));
+		assertEquals(read("(two three)"), RT.eval(read("(a 'one 'two 'three)")));
+		assertEquals(read("nil"), RT.eval(read("(a 'one)")));
+		assertEquals(read("nil"), RT.eval(read("(a)")));
+	}
+
+	@Test
+	public void testDefBinary() throws IOException {
+		RT.eval(read("(def a (x y) (join x y))"));
+		assertEquals(read("(x . y)"), RT.eval(read("(a 'x 'y)")));
 	}
 
 	@Test
