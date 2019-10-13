@@ -130,20 +130,20 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		if (((Pair) head).cadr() == Symbol.MAC) {
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
 			try {
-				Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
+				Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x, "");
 				return this.appliedTo(macroCallResult);
 			} catch (IllegalArgumentException e) {
 				System.out.println("OOriginal full expression: " + expression);
 				throw e;
 			}
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
-			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
+			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo, "" + expression + " " + env.getLexicalScope());
 		} else {
 			throw new IllegalArgumentException("We only evaluate MAC or CLO literals!");
 		}
 	}
 
-	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper) {
+	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper, String debug) {
 		assert fn.car() == LIT;
 		assert fn.cadr() == Symbol.CLO;
 
@@ -152,7 +152,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		Expression body = fn.caddddr();
 
 		final Map<String, Expression> localScope;
-		localScope = (mapArgs(paramDeclarations, passedParamValues, argsMapper));
+		localScope = (mapArgs(paramDeclarations, passedParamValues, argsMapper, debug));
 
 		if (fn.caddr() != NIL) { // local closure
 			((Pair) fn.caddr()).forEach(binding -> localScope.putIfAbsent(((Symbol) ((Pair) binding).car()).name, ((Pair) binding).cdr()));
@@ -166,7 +166,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
-	private static Map<String, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper) {
+	private static Map<String, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper, String debug) {
 		Map<String, Expression> result = new HashMap<>();
 
 		Optional<Pair> values = values0 == NIL ? Optional.empty() : Optional.of((Pair) values0);
@@ -185,7 +185,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 				if ((name.car() instanceof Symbol)) {
 					if (! values.isPresent()) {
-						throw new EvaluationException(names, "Can not call with less arguments than expected!");
+						throw new EvaluationException(names, "Can not call with less arguments than expected! expr=" + debug);
 					}
 					result.put(((Symbol) name.car()).name, mapper.apply(values.get().car()));
 				} else {

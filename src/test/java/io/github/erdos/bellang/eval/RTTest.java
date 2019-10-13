@@ -20,6 +20,7 @@ import static io.github.erdos.bellang.objects.Character.character;
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.symbol;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RTTest {
 
@@ -140,7 +141,7 @@ class RTTest {
 		RT.eval(read("(def a (x . xs) xs)"));
 		assertEquals(read("(two three)"), RT.eval(read("(a 'one 'two 'three)")));
 		assertEquals(read("nil"), RT.eval(read("(a 'one)")));
-		assertEquals(read("nil"), RT.eval(read("(a)")));
+		assertThrows(EvaluationException.class, () -> RT.eval(read("(a)")));
 	}
 
 	@Test

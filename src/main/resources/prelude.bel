@@ -7,9 +7,9 @@
 
 (mac def (name args body) `(set ,name (fn ,args ,body)))
 
-(def join (x y) (join x y))
-(def car (x y) (car x y))
-(def cdr (x y) (cdr x y))
+(def join ((o x) (o y)) (join x y))
+(def car (x) (car x))
+(def cdr (x) (cdr x))
 
 (mac quote (y) (join 'quote (join y nil)))
 (mac lit (x) `(lit ,x))
