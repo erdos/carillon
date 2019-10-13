@@ -53,26 +53,10 @@ class ReaderTest {
 	}
 
 	@Test
-	public void testFnShorthand() throws IOException {
-		Expression result = read("[f _ x]");
-		Expression result2 = read("(fn (_) (f _ x))");
-		assertEquals(result, result2);
-	}
-
-	// TODO: does it make sense?
-	@Test
-	public void testFnShorthand2() throws IOException {
-		Expression result = read("[no (f _ x)]");
-		Expression result2 = read("(fn ((f _ x)) (no (f _ x)))");
-		assertEquals(result, result2);
-	}
-
-	@Test
 	public void testFnShorthandLong() throws IOException {
 		assertEquals(read("(fn (_) (f _ x))"), read("[f _ x]"));
-		assertEquals(read("(fn (z) (no z))"), read("[no z]"));
-		assertEquals(read("(fn (z) (no z w t))"), read("[no z w t]"));
-
+		assertEquals(read("(fn (_) (no z))"), read("[no z]"));
+		assertEquals(read("(fn (_) (no z w t))"), read("[no z w t]"));
 	}
 
 	@Test

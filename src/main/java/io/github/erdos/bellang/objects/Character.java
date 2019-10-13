@@ -1,7 +1,5 @@
 package io.github.erdos.bellang.objects;
 
-import java.util.Objects;
-
 public final class Character implements Expression {
 	private final char c;
 
@@ -35,6 +33,6 @@ public final class Character implements Expression {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(c);
+		return c;
 	}
 }

@@ -23,13 +23,12 @@ public final class Pair implements Expression, Iterable<Expression> {
 	public String toString() {
 		if (first == Symbol.QUOTE && second instanceof Pair && (((Pair) second).second == NIL || ((Pair) second).second == null)) {
 			return "'" + ((Pair) second).first;
+		} else if (first == NIL && second == NIL) {
+			return "()";
 		}
+
 		StringBuilder sb = new StringBuilder("(");
-		if (first == null) {
-			sb.append("nil");
-		} else {
-			sb.append(first.toString());
-		}
+		sb.append(first.toString());
 
 		Pair current = this;
 

@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PairTest {
 
-
 	@Test
 	public void testIterable() {
 		Pair pair = list(symbol("a"), symbol("b"), symbol("c"));
@@ -34,16 +33,14 @@ class PairTest {
 	@Test
 	public void testToString1() {
 		assertEquals("(c)", pair(symbol("c"), NIL).toString());
-	}
-
-	@Test
-	public void testToString2() {
+		assertEquals("()", pair(NIL, NIL).toString());
+		assertEquals("(nil . c)", pair(NIL, symbol("c")).toString());
 		assertEquals("(c . d)", pair(symbol("c"), symbol("d")).toString());
+		assertEquals("(c d)", list(symbol("c"), symbol("d")).toString());
 	}
 
 	@Test
 	public void testToString2List() {
-		assertEquals("(c d)", list(symbol("c"), symbol("d")).toString());
 		assertEquals("(b c d)", list(symbol("b"), symbol("c"), symbol("d")).toString());
 	}
 

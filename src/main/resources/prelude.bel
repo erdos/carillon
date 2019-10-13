@@ -13,6 +13,6 @@
 
 (mac quote (y) (join 'quote (join y nil)))
 (mac lit (x) `(lit ,x))
-
+(mac apply x (join apply x))
 
 (mac let (k v body) `((fn (,k) ,body) ,v))

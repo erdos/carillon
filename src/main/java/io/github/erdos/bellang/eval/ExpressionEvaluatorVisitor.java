@@ -9,6 +9,7 @@ import io.github.erdos.bellang.objects.Symbol;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static io.github.erdos.bellang.objects.Symbol.APPLY;
@@ -122,16 +123,19 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression head = expression.car().apply(this);
 
-		if (! (head instanceof Pair)) {
+		if (!(head instanceof Pair)) {
 			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression + " scope=" + env.getLexicalScope() + " ");
 		}
 
 		if (((Pair) head).cadr() == Symbol.MAC) {
-			// System.out.println("Evaluating macro " + head);
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
-			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
-			return this.appliedTo(macroCallResult);
-
+			try {
+				Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
+				return this.appliedTo(macroCallResult);
+			} catch (IllegalArgumentException e) {
+				System.out.println("OOriginal full expression: " + expression);
+				throw e;
+			}
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
 		} else {
@@ -139,107 +143,68 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
-	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsFn) {
+	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper) {
 		assert fn.car() == LIT;
 		assert fn.cadr() == Symbol.CLO;
 
-
-
-
 		Expression paramDeclarations = fn.cadddr(); // fourth elem
+
 		Expression body = fn.caddddr();
 
-		Map<String, Expression> localScope;
-		if (passedParamValues == NIL) {
-			localScope = (mapArgsEmpty(paramDeclarations));
-		} else {
-			localScope = (mapArgs(paramDeclarations, (Pair) passedParamValues, argsFn));
-		}
+		final Map<String, Expression> localScope;
+		localScope = (mapArgs(paramDeclarations, passedParamValues, argsMapper));
 
-		Expression closureScope = fn.caddr(); // fourth elem
-		if (closureScope != NIL) {
-			((Pair) closureScope).forEach(binding -> {
-				localScope.putIfAbsent(((Symbol)((Pair) binding).car()).name,((Pair) binding).cdr());
-			});
+		if (fn.caddr() != NIL) { // local closure
+			((Pair) fn.caddr()).forEach(binding -> localScope.putIfAbsent(((Symbol) ((Pair) binding).car()).name, ((Pair) binding).cdr()));
 		}
 
 		env.pushLexicals(localScope);
 		try {
-			// System.out.println("1. " + body);
-			// System.out.println("2. " + fn);
-
 			return body.apply(this);
 		} finally {
 			env.popLexicals();
 		}
 	}
 
-	private static Map<String, Expression> mapArgsEmpty(Expression names) {
+	private static Map<String, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper) {
 		Map<String, Expression> result = new HashMap<>();
-		while (names != NIL) {
-			if (names instanceof  Symbol) {
-				result.put(((Symbol) names).name, NIL);
-				break;
-			} else {
-				result.put( ((Symbol) ((Pair)names).car()).name, NIL);
-				names = ((Pair)names).cdr();
-			}
-		}
-		return result;
-	}
 
-	private static Map<String, Expression> mapArgs(Expression names, Pair values, Function<Expression, Expression> mapper) {
-
-		Map<String, Expression> result = new HashMap<>();
+		Optional<Pair> values = values0 == NIL ? Optional.empty() : Optional.of((Pair) values0);
 
 		while (names != NIL) {
 			if (names instanceof Symbol) {
-				result.put(((Symbol) names).name, map(values, mapper));
+				// last item is just a symbol.
+				if (values.isPresent()) {
+					result.put(((Symbol) names).name, map(values.get(), mapper));
+				} else {
+					result.put(((Symbol) names).name, NIL);
+				}
 				break;
 			} else {
 				Pair name = (Pair) names;
 
 				if ((name.car() instanceof Symbol)) {
-					result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
+					if (! values.isPresent()) {
+						throw new EvaluationException(names, "Can not call with less arguments than expected!");
+					}
+					result.put(((Symbol) name.car()).name, mapper.apply(values.get().car()));
 				} else {
 					// optional parameter
 					Pair clause = (Pair) name.car();
 
 					assert clause.nth(0) == O;
 
-					String paramName = ((Symbol)clause.nth(1)).name;
-					Expression paramValue = mapper.apply(clause.nthOrNil(2));
-					result.put(paramName, paramValue);
-				}
-				// System.out.println("Name is + " + name.car());
-
-				if (values.cdr() == NIL) {
-					while (name.cdr() != NIL) {
-						if (name.cdr() instanceof Pair) {
-							if ((name.cadr() instanceof Symbol)) {
-								result.put(((Symbol) name.cadr()).name, NIL);
-
-							} else {
-								// optional parameter
-								Pair clause = (Pair) name.cadr();
-
-								assert clause.nth(0) == O;
-
-								String paramName = ((Symbol)clause.nth(1)).name;
-								Expression paramValue = mapper.apply(clause.nthOrNil(2));
-								result.put(paramName, paramValue);
-							}
-							name = (Pair) name.cdr();
-						} else {
-							result.put(((Symbol) name.cdr()).name, NIL);
-							break;
-						}
+					if (values.isPresent()) {
+						result.put(((Symbol) clause.nth(1)).name, mapper.apply(values.get().car()));
+					} else {
+						String paramName = ((Symbol) clause.nth(1)).name;
+						Expression paramValue = mapper.apply(clause.nthOrNil(2));
+						result.put(paramName, paramValue);
 					}
-					break;
-				} else {
-					names = name.cdr();
-					values = (Pair) values.cdr();
 				}
+
+				names = name.cdr();
+				values = values.map(x -> x.cdr() == NIL ? null : (Pair) x.cdr());
 			}
 		}
 
@@ -249,14 +214,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	private static Expression map(Expression p, Function<Expression, Expression> f) {
 		if (p == NIL) {
 			return NIL;
-		} else {			// TODO: remove recursion!
+		} else {            // TODO: remove recursion!
 			Pair pair = (Pair) p;
 			return RT.pair(f.apply(pair.car()), map(pair.cdr(), f));
 		}
-	}
-
-	private static boolean isLit(Expression e) {
-		return e instanceof Pair && ((Pair) e).car() == Symbol.LIT;
 	}
 
 	@Override
@@ -270,7 +231,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return symbol;
 		}
 		//else if (symbol == JOIN) {
-			// TODO: not sure if it is semantically correct.
+		// TODO: not sure if it is semantically correct.
 		//	return symbol;
 		//}
 		else if (symbol == CHARS) {

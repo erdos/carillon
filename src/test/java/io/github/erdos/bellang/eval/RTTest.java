@@ -5,6 +5,7 @@ import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Symbol;
 import io.github.erdos.bellang.reader.Reader;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -122,7 +123,9 @@ class RTTest {
 	@Test
 	public void testCallLessArgs() throws IOException {
 		RT.eval(read("(def a (x y z) (join z (join y x)))"));
-		assertEquals(read("(nil  nil . f)"), RT.eval(read("(a 'f)")));
+		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a)")));
+		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a 'f)")));
+		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a 'f 'g)")));
 	}
 
 	@Test
@@ -153,12 +156,21 @@ class RTTest {
 		System.out.println(RT.eval(read("(a 'f)")));
 	}
 
-//	@Ignore
-//	@Test
-	public void testlet() throws IOException {
-		Expression read = read("(testlet a 1 (join a a))");
-		System.out.println("> " + read);
-		System.out.println(RT.eval(read));
+
+	// TODO: on calculating optional values - should we also use var bindings from parameters?
+	@Test
+	public void fnCallWithOptional() throws IOException {
+		// System.out.println(RT.eval(read("((fn ((o x 'y)) x))")));
+
+		// last arg is missing so default value is presented.
+		assertEquals(symbol("y"), RT.eval(read("((fn (a (o x 'y)) x) 'b)")));
+
+		// last arg is nil so deafult value is not calculated.
+		// assertEquals(NIL, RT.eval(read("((fn (a (o x 'y)) x) 'b nil)")));
+
+		// last arg is presented and used.
+		assertEquals(symbol("c"), RT.eval(read("((fn (a (o x 'y)) x) 'b 'c)")));
+
 	}
 
 	@Test
