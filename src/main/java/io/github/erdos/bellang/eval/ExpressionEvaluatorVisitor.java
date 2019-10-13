@@ -29,13 +29,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	private final Evaluator env = new Evaluator();
 
 	public Expression appliedTo(Expression param) {
-		assert param != null;
-		Expression result = param.apply(this);
-		if (result == null) {
-			throw new RuntimeException("Appliedm to  " + param);
-		}
-		assert result != null;
-		return result;
+		return param.apply(this);
 	}
 
 	@Override
@@ -111,6 +105,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	private Expression evalLitCall(Pair expression) {
 
+		//System.out.println("Evaling lit call: " + expression + " with " + env.getLexicalScope());
 		if (expression.isEmpty()) {
 			throw new EvaluationException(expression, "Can not evaluate empty list!");
 		}
@@ -118,15 +113,16 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		Expression head = this.appliedTo(expression.car());
 
 		if (! (head instanceof Pair)) {
-			throw new EvaluationException(head, "Expected pair, got: " + head);
+			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression + " scope=" + env.getLexicalScope() + " ");
 		}
 
 		if (((Pair) head).cadr() == Symbol.MAC) {
+			// System.out.println("Evaluating macro " + head);
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
-			return this.appliedTo(evalFnCallImpl(nestedClo, expression.cdr(), x -> x));
+			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
+			return this.appliedTo(macroCallResult);
 
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
-			assert ((Pair) head).cadr() == Symbol.CLO;
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
 		} else {
 			throw new IllegalArgumentException("We only evaluate MAC or CLO literals!");
@@ -140,15 +136,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		Expression params = fn.cadddr(); // fourth elem
 		Expression body = fn.caddddr();
 
-		try {
-			if (bodies == NIL) {
-				env.pushLexicals(mapArgsEmpty(params));
-			} else {
-				env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
-			}
-		} catch (EvaluationException e) {
-			System.out.println("Could not map args for: " + params + "  /  " + bodies + "    " + fn);
-			throw e;
+		if (bodies == NIL) {
+			env.pushLexicals(mapArgsEmpty(params));
+		} else {
+			env.pushLexicals(mapArgs(params, (Pair) bodies, argsFn));
 		}
 		try {
 			return appliedTo(body);
@@ -181,12 +172,40 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				break;
 			} else {
 				Pair name = (Pair) names;
-				result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
+
+
+
+
+				if ((name.car() instanceof Symbol)) {
+					result.put(((Symbol)name.car()).name, mapper.apply(values.car()));
+				} else {
+					// optional parameter
+					Pair clause = (Pair) name.car();
+
+					assert clause.nth(0) == O;
+
+					String paramName = ((Symbol)clause.nth(1)).name;
+					Expression paramValue = mapper.apply(clause.nthOrNil(2));
+					result.put(paramName, paramValue);
+				}
+				// System.out.println("Name is + " + name.car());
 
 				if (values.cdr() == NIL) {
 					while (name.cdr() != NIL) {
 						if (name.cdr() instanceof Pair) {
-							result.put(((Symbol) name.cadr()).name, NIL);
+							if ((name.cadr() instanceof Symbol)) {
+								result.put(((Symbol) name.cadr()).name, NIL);
+
+							} else {
+								// optional parameter
+								Pair clause = (Pair) name.cadr();
+
+								assert clause.nth(0) == O;
+
+								String paramName = ((Symbol)clause.nth(1)).name;
+								Expression paramValue = mapper.apply(clause.nthOrNil(2));
+								result.put(paramName, paramValue);
+							}
 							name = (Pair) name.cdr();
 						} else {
 							result.put(((Symbol) name.cdr()).name, NIL);

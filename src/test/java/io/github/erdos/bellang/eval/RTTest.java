@@ -113,6 +113,13 @@ class RTTest {
 	}
 
 	@Test
+	public void testCallVarargsNone() throws IOException {
+		RT.eval(read("(def a xs (car xs))"));
+		assertEquals(read("x"), RT.eval(read("(a 'x 'y 'z)")));
+		assertEquals(read("nil"), RT.eval(read("(a)")));
+	}
+
+	@Test
 	public void testCallVarargs() throws IOException {
 		RT.eval(read("(def a (x . xs) xs)"));
 		assertEquals(read("(two three)"), RT.eval(read("(a 'one 'two 'three)")));
@@ -126,10 +133,11 @@ class RTTest {
 		assertEquals(read("(x . y)"), RT.eval(read("(a 'x 'y)")));
 	}
 
+	@Ignore
 	@Test
-	public void testDef2() throws IOException {
-		RT.eval(read("(def a (x) (x 'b 'c))")); // a (reduce join ns) teljesen valid scenario!
-		System.out.println(RT.eval(read("(a join)")));
+	public void testFunctionReturnsFunction() throws IOException {
+		RT.eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
+		System.out.println(RT.eval(read("(a 'f)")));
 	}
 
 	@Test
@@ -146,7 +154,7 @@ class RTTest {
 	}
 
 	@Test
-	@Ignore
+	//@Ignore
 	public void testBel() {
 
 		try (InputStream stream = RT.class.getResourceAsStream("/bel.bel");

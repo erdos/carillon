@@ -146,4 +146,24 @@ public final class Pair implements Expression, Iterable<Expression> {
 	public boolean isRightNil() {
 		return second == NIL || second == null;
 	}
+
+	public Expression nth(int n) {
+		Pair p = this;
+		for (int i = 0; i < n; i++) {
+			p = (Pair) p.second;
+		}
+		return p.car();
+	}
+
+	public Expression nthOrNil(int n) {
+		Pair p = this;
+		for (int i = 0; i < n; i++) {
+			if (p.second == NIL) {
+				return NIL;
+			} else {
+				p = (Pair) p.second;
+			}
+		}
+		return p.car();
+	}
 }
