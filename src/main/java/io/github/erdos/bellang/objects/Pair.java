@@ -1,8 +1,20 @@
 package io.github.erdos.bellang.objects;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 
@@ -24,7 +36,7 @@ public final class Pair implements Expression, Iterable<Expression> {
 		if (first == Symbol.QUOTE && second instanceof Pair && (((Pair) second).second == NIL || ((Pair) second).second == null)) {
 			return "'" + ((Pair) second).first;
 		} else if (first == NIL && second == NIL) {
-			return "()";
+			return "(nil)";
 		}
 
 		StringBuilder sb = new StringBuilder("(");
@@ -96,6 +108,50 @@ public final class Pair implements Expression, Iterable<Expression> {
 					head = (Pair) (head.second);
 				}
 				return result;
+			}
+		};
+	}
+
+	public Stream<Expression> stream() {
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.ORDERED), false);
+	}
+
+	static class State {
+		Pair first, last;
+	}
+
+	public static Collector<Expression, State, Pair> collect() {
+
+		return new Collector<Expression, State, Pair>() {
+			@Override
+			public Supplier<State> supplier() {
+				return State::new;
+			}
+
+			@Override
+			public BiConsumer<State, Expression> accumulator() {
+				return (p, e) -> {
+
+				};
+			}
+
+			@Override
+			public BinaryOperator<State> combiner() {
+				return (a, b) -> {
+					a.last.setCdr(b.first);
+					a.last = b.last;
+					return a;
+				};
+			}
+
+			@Override
+			public Function<State, Pair> finisher() {
+				return state -> state.first;
+			}
+
+			@Override
+			public Set<Characteristics> characteristics() {
+				return Collections.emptySet();
 			}
 		};
 	}

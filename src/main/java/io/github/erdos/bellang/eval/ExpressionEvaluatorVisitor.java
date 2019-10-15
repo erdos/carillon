@@ -29,13 +29,22 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	private final Evaluator env = new Evaluator();
 
+	// see: ev function in bel.bel
 	public Expression appliedTo(Expression param) {
 		return param.apply(this);
 	}
 
 	@Override
 	public Expression pair(Pair pair) {
+
+		Optional<Variable> maybeVar = Variable.of(pair);
+		if (maybeVar.isPresent()) {
+			return env.get(maybeVar.get()).orElseThrow(() -> new EvaluationException(pair, "Could not resolve variable!"));
+		}
+
 		Expression sym = pair.car();
+
+		// TODO: call order:
 
 		// TODO: maybe remove it!
 		if (Symbol.symbol("err") == sym) {
@@ -46,6 +55,9 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return expression;
 		}
 
+		if (Symbol.LIT.equals(sym)) {
+			return specialForms.evalLit(pair);
+		}
 
 		if (Symbol.IF.equals(sym)) {
 			return specialForms.evalIf(pair, this);
@@ -53,10 +65,6 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		if (Symbol.QUOTE.equals(sym)) {
 			return specialForms.evalQuote(pair);
-		}
-
-		if (Symbol.LIT.equals(sym)) {
-			return specialForms.evalLit(pair);
 		}
 
 		if (Symbol.ID.equals(sym)) {
@@ -116,10 +124,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	private Expression evalLitCall(Pair expression) {
 
-		//System.out.println("Evaling lit call: " + expression + " with " + env.getLexicalScope());
-		if (expression.isEmpty()) {
-			throw new EvaluationException(expression, "Can not evaluate empty list!");
-		}
+		// System.out.println("Evaling lit call: " + expression + " with " + env.getLexicalScope());
 
 		Expression head = expression.car().apply(this);
 
@@ -133,11 +138,11 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x, "");
 				return this.appliedTo(macroCallResult);
 			} catch (IllegalArgumentException e) {
-				System.out.println("OOriginal full expression: " + expression);
+				System.out.println("Original full expression: " + expression);
 				throw e;
 			}
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
-			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo, "" + expression + " " + env.getLexicalScope());
+			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo, "expression=" + expression + " lexicalScope=" + env.getLexicalScope());
 		} else {
 			throw new IllegalArgumentException("We only evaluate MAC or CLO literals!");
 		}
@@ -151,14 +156,13 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression body = fn.caddddr();
 
-		final Map<String, Expression> localScope;
-		localScope = (mapArgs(paramDeclarations, passedParamValues, argsMapper, debug));
+		final Map<Variable, Expression> newScope = mapArgs(paramDeclarations, passedParamValues, argsMapper, debug);
 
 		if (fn.caddr() != NIL) { // local closure
-			((Pair) fn.caddr()).forEach(binding -> localScope.putIfAbsent(((Symbol) ((Pair) binding).car()).name, ((Pair) binding).cdr()));
+			((Pair) fn.caddr()).forEach(binding -> newScope.putIfAbsent(Variable.of( ((Pair) binding).car()).get(), ((Pair) binding).cdr()));
 		}
 
-		env.pushLexicals(localScope);
+		env.pushLexicals(newScope);
 		try {
 			return body.apply(this);
 		} finally {
@@ -166,18 +170,25 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
-	private static Map<String, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper, String debug) {
-		Map<String, Expression> result = new HashMap<>();
+	private static Map<Variable, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper, String debug) {
+		Map<Variable, Expression> result = new HashMap<>();
+		final Expression names0 = names;
 
 		Optional<Pair> values = values0 == NIL ? Optional.empty() : Optional.of((Pair) values0);
+
+		// TODO: is it needed here?
+		if (names.equals(RT.pair(NIL, NIL))) {
+			// TODO: itt ellenorizni kene a values ertekeit is!
+			return result;
+		}
 
 		while (names != NIL) {
 			if (names instanceof Symbol) {
 				// last item is just a symbol.
 				if (values.isPresent()) {
-					result.put(((Symbol) names).name, map(values.get(), mapper));
+					result.put(Variable.of(names).get(), map(values.get(), mapper));
 				} else {
-					result.put(((Symbol) names).name, NIL);
+					result.put(Variable.of(names).get(), NIL);
 				}
 				break;
 			} else {
@@ -185,21 +196,29 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 				if ((name.car() instanceof Symbol)) {
 					if (! values.isPresent()) {
-						throw new EvaluationException(names, "Can not call with less arguments than expected! expr=" + debug);
+						throw new EvaluationException(names, "Can not call with less arguments than expected! " + debug + " param names=" + names0);
+					} else {
+						result.put(Variable.of(name.car()).get(), mapper.apply(values.get().car()));
 					}
-					result.put(((Symbol) name.car()).name, mapper.apply(values.get().car()));
 				} else {
 					// optional parameter
 					Pair clause = (Pair) name.car();
 
-					assert clause.nth(0) == O;
-
-					if (values.isPresent()) {
-						result.put(((Symbol) clause.nth(1)).name, mapper.apply(values.get().car()));
+					if (clause.nth(0) == O) {
+						// optional parameter
+						if (values.isPresent()) {
+							result.put(Variable.of(clause.nth(1)).get(), mapper.apply(values.get().car()));
+						} else {
+							Variable paramName = Variable.of(clause.nth(1)).get();
+							Expression paramValue = mapper.apply(clause.nthOrNil(2));
+							result.put(paramName, paramValue);
+						}
 					} else {
-						String paramName = ((Symbol) clause.nth(1)).name;
-						Expression paramValue = mapper.apply(clause.nthOrNil(2));
-						result.put(paramName, paramValue);
+						if (! values.isPresent()) {
+							throw new EvaluationException(names, "Can not call with less arguments than expected! " + debug + " param names=" + names0);
+						} else {
+							result.put(Variable.of(name.car()).orElseThrow(() -> new EvaluationException(name.car(), "Not a valid variable!" + name.car())), mapper.apply(values.get().car()));
+						}
 					}
 				}
 
@@ -227,6 +246,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	@Override
 	public Expression symbol(Symbol symbol) {
+		// TODO: lookup order: dynamic, scope, globe, defaults.
+
 		if (symbol == T || symbol == NIL || symbol == O || symbol == APPLY) {
 			return symbol;
 		}
@@ -234,23 +255,27 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		// TODO: not sure if it is semantically correct.
 		//	return symbol;
 		//}
-		else if (symbol == CHARS) {
+
+		Optional<Expression> bound = env.get(Variable.of(symbol).get());
+		if (bound.isPresent()) return bound.get();
+
+		if (symbol == CHARS) {
 			return Constants.CHARS_LIST;
 		} else if (symbol == GLOBE) {
 			throw new RuntimeException("Can not use globe yet.");
 		} else if (symbol == SCOPE) {
 			Expression tail = NIL;
-			for (Map.Entry<String, Expression> entry : env.getLexicalScope().entrySet()) {
-				tail = RT.pair(RT.pair(Symbol.symbol(entry.getKey()), entry.getValue()), tail);
+			for (Map.Entry<Variable, Expression> entry : env.getLexicalScope().entrySet()) {
+				tail = RT.pair(RT.pair(entry.getKey().getExpression(), entry.getValue()), tail);
 			}
 			return tail;
 		} else if (symbol == INS) {
 			throw new RuntimeException("Can not use ins yet.");
 		} else if (symbol == OUTS) {
 			throw new RuntimeException("Can not use outs yet.");
-		} else {
-			return env.get(symbol);
 		}
+
+		throw new EvaluationException(symbol, "Symbol not bound: " + symbol);
 	}
 
 	@Override
@@ -258,14 +283,20 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		return character;
 	}
 
-	Expression set(Pair pair) {
-		assert Symbol.SET == pair.car();
+	Expression set(Pair call) {
+		assert Symbol.SET == call.car();
 
-		Symbol key = (Symbol) pair.cadr();
-		Expression value = pair.caddr().apply(this);
+		Expression tail = call.cdr();
 
-		env.set(key, value);
+		while (tail != NIL) {
+			Pair pair = (Pair) tail;
+			Symbol key = (Symbol) pair.car();
+			Expression value = pair.cadr().apply(this);
+			env.set(Variable.of(key).get(), value);
 
-		return value;
+			tail = ((Pair)((Pair)tail).cdr()).cdr();
+		}
+
+		return NIL;
 	}
 }

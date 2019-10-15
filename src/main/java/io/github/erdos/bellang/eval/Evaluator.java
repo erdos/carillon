@@ -1,19 +1,19 @@
 package io.github.erdos.bellang.eval;
 
 import io.github.erdos.bellang.objects.Expression;
-import io.github.erdos.bellang.objects.Symbol;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Evaluator {
 
-	private final Map<String, Expression> globals = new ConcurrentHashMap<>();
+	private final Map<Variable, Expression> globals = new ConcurrentHashMap<>();
 
-	private final ThreadLocal<Map<String, Expression>> dynamicBindings = ThreadLocal.withInitial(HashMap::new);
+	private final ThreadLocal<Map<Variable, Expression>> dynamicBindings = ThreadLocal.withInitial(HashMap::new);
 
 	/**
 	 * If you do an assignment to a variable that has one of the three kinds
@@ -21,66 +21,66 @@ public class Evaluator {
 	 * you do an assignment to a variable that's not bound, you'll create a
 	 * global binding for it.
 	 */
-	public void set(Symbol s, Expression e) {
-		if (dynamicBindings.get().containsKey(s.name)) {
-			dynamicBindings.get().put(s.name, e);
-		} else if (getLexicalBinding(s) != null) {
+	public void set(Variable v, Expression e) {
+		if (dynamicBindings.get().containsKey(v)) {
+			dynamicBindings.get().put(v, e);
+		} else if (getLexicalBinding(v) != null) {
 			// TODO: implementation here.
 		} else {
-			globals.put(s.name, e);
+			globals.put(v, e);
 		}
 	}
 
 	/**
 	 * Dynamic bindings take precendence over lexical bindings, which take precedence over global ones.
 	 */
-	public Expression get(Symbol s) {
-		Expression e = getDynamicBinding(s);
-		if (e != null) return e;
+	public Optional<Expression> get(Variable v) {
+		Expression e = getDynamicBinding(v);
+		if (e != null) return Optional.of(e);
 
-		e = getLexicalBinding(s);
-		if (e != null) return e;
+		e = getLexicalBinding(v);
+		if (e != null) return Optional.of(e);
 
-		e = getGlobalBinding(s);
-		if (e != null) return e;
+		e = getGlobalBinding(v);
+		if (e != null) return Optional.of(e);
 
-		throw new EvaluationException(s, "No binding for symbol " + s);
+		return Optional.empty();
 	}
 
-	public Expression getGlobalBinding(Symbol s) {
-		return globals.get(s.name);
+	public Expression getGlobalBinding(Variable v) {
+		return globals.get(v);
 	}
 
-	public Expression getLexicalBinding(Symbol s) {
+	public Expression getLexicalBinding(Variable v) {
 
 		// TODO: itt lehet, hogy forditva kellene berani!
-		for (Map<String, Expression> m : lexicals) {
-			if (m.containsKey(s.name)) {
-				return m.get(s.name);
+		for (Map<Variable, Expression> m : lexicals) {
+			if (m.containsKey(v)) {
+				return m.get(v);
 			}
 		}
 
 		return null;
 	}
 
-	public Map<String, Expression> getLexicalScope() {
-		Map<String, Expression> map = new HashMap<>();
-		for (Map<String, Expression> m : lexicals) {
-			for (Map.Entry<String, Expression> entry : m.entrySet()) {
+	public Map<Variable, Expression> getLexicalScope() {
+		Map<Variable, Expression> map = new HashMap<>();
+		for (Map<Variable, Expression> m : lexicals) {
+			for (Map.Entry<Variable, Expression> entry : m.entrySet()) {
 				map.putIfAbsent(entry.getKey(), entry.getValue());
 			}
 		}
 		return map;
 	}
 
-	public Expression getDynamicBinding(Symbol s) {
-		return dynamicBindings.get().get(s.name);
+	public Expression getDynamicBinding(Variable v) {
+		return dynamicBindings.get().get(v);
 	}
 
 
-	private final Deque<Map<String, Expression>> lexicals = new ArrayDeque<>();
+	private final Deque<Map<Variable, Expression>> lexicals = new ArrayDeque<>();
 
-	public void pushLexicals(Map<String, Expression> lexicalMapping) {
+	public void pushLexicals(Map<Variable, Expression> lexicalMapping) {
 		lexicals.push(lexicalMapping);
 	}
 

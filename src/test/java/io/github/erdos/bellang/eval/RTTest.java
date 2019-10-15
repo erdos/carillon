@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.io.StringReader;
 
+import static io.github.erdos.bellang.eval.RT.eval;
 import static io.github.erdos.bellang.eval.RT.list;
 import static io.github.erdos.bellang.eval.RT.pair;
 import static io.github.erdos.bellang.objects.Character.character;
@@ -27,136 +28,153 @@ class RTTest {
 	@Test
 	public void testEvalCharacter() {
 		io.github.erdos.bellang.objects.Character c = character('a');
-		assertEquals(c, RT.eval(c));
+		assertEquals(c, eval(c));
 	}
 
 	@Test
 	public void testEvalQuoted() {
 		Expression expression = list(symbol("a"), symbol("b"));
-		assertEquals(expression, RT.eval(RT.quote(expression)));
+		assertEquals(expression, eval(RT.quote(expression)));
 	}
 
 	@Test
 	public void testEvalLit() {
 		Expression expression = list(Symbol.LIT, symbol("b"));
-		assertEquals(expression, RT.eval(expression));
+		assertEquals(expression, eval(expression));
 	}
 
 	@Test
 	public void testSymbolsIdentical() throws IOException {
 		Expression expression = read("(id 'alabama 'alabama)");
-		assertEquals(symbol("t"), RT.eval(expression));
+		assertEquals(symbol("t"), eval(expression));
 	}
 
 	@Test
 	public void testCar() throws IOException {
-		assertEquals(symbol("a"), RT.eval(read("(car '(a b))")));
+		assertEquals(symbol("a"), eval(read("(car '(a b))")));
 	}
 
 	@Test
 	public void testCdr() throws IOException {
 		Expression expression = read("(cdr '(a b))");
-		assertEquals(list(symbol("b")), RT.eval(expression));
+		assertEquals(list(symbol("b")), eval(expression));
 	}
 
 
 	@Test
 	public void asdf() throws IOException {
-		assertEquals(symbol("x"), RT.eval(read("((fn (a) a)  'x)")));
+		assertEquals(symbol("x"), eval(read("((fn (a) a)  'x)")));
 	}
 
 
 	@Test
 	public void dfdf() throws IOException {
 		//  ????
-		assertEquals(symbol("x"), RT.eval(read("((fn (f a) (f a)) quote 'x)")));
+		assertEquals(symbol("x"), eval(read("((fn (f a) (f a)) quote 'x)")));
 	}
 
 	@Test
 	public void specialSymbolsEvalToThemselves() {
-		assertEquals(symbol("t"), RT.eval(symbol("t")));
-		assertEquals(symbol("nil"), RT.eval(symbol("nil")));
-		assertEquals(symbol("o"), RT.eval(symbol("o")));
-		assertEquals(symbol("apply"), RT.eval(symbol("apply")));
+		assertEquals(symbol("t"), eval(symbol("t")));
+		assertEquals(symbol("nil"), eval(symbol("nil")));
+		assertEquals(symbol("o"), eval(symbol("o")));
+		assertEquals(symbol("apply"), eval(symbol("apply")));
 	}
 
 	@Test
 	public void closure1() throws IOException {
 		String input = "((lit clo nil (x) (car x)) '(a b))";
 		Expression inputExpression = read(input);
-		assertEquals(symbol("a"), RT.eval(inputExpression));
+		assertEquals(symbol("a"), eval(inputExpression));
 	}
 
 	@Test
 	public void join0() {
-		assertEquals(pair(NIL, NIL), RT.eval(list(symbol("join"))));
+		assertEquals(pair(NIL, NIL), eval(list(symbol("join"))));
 	}
 
 	@Test
 	public void join1() throws IOException {
-		assertEquals(read("(a b)"), RT.eval(read("(join 'a (join 'b nil))")));
+		assertEquals(read("(a b)"), eval(read("(join 'a (join 'b nil))")));
 	}
 
 	@Test
 	public void if2() throws IOException {
-		assertEquals(read("b"), RT.eval(read("(if nil 'a 't 'b)")));
-		assertEquals(read("a"), RT.eval(read("(if 't 'a)")));
-		assertEquals(read("a"), RT.eval(read("(if 't 'a 'b)")));
-		assertEquals(read("b"), RT.eval(read("(if nil 'a 'b)")));
+		assertEquals(read("b"), eval(read("(if nil 'a 't 'b)")));
+		assertEquals(read("a"), eval(read("(if 't 'a)")));
+		assertEquals(read("a"), eval(read("(if 't 'a 'b)")));
+		assertEquals(read("b"), eval(read("(if nil 'a 'b)")));
 
-		assertEquals(read("nil"), RT.eval(read("(if nil 'a)")));
-		assertEquals(read("nil"), RT.eval(read("(if nil 'a nil 'b)")));
+		assertEquals(read("nil"), eval(read("(if nil 'a)")));
+		assertEquals(read("nil"), eval(read("(if nil 'a nil 'b)")));
 	}
 
 	@Test
 	public void testMacUnary() throws IOException {
-		RT.eval(read("(mac a (x) (join 'quote (join x nil)))"));
-		assertEquals(read("x"), RT.eval(read("(a x)")));
+		eval(read("(mac a (x) (join 'quote (join x nil)))"));
+		assertEquals(read("x"), eval(read("(a x)")));
 	}
 
 
 	@Test
+	public void testMacOr() throws IOException {
+		eval(read("(def no (x) (id x nil))"));
+		eval(read("(mac or (a b) (if (no a) b a))"));
+		assertEquals(read("b"), eval(read("(or nil 'b)")));
+	}
+
+	@Test
 	public void testDefUnary() throws IOException {
-		RT.eval(read("(def a (x) (join x x))"));
-		assertEquals(pair(symbol("x"), symbol("x")), RT.eval(read("(a 'x)")));
+		eval(read("(def a (x) (join x x))"));
+		assertEquals(pair(symbol("x"), symbol("x")), eval(read("(a 'x)")));
 	}
 
 	@Test
 	public void testCallLessArgs() throws IOException {
-		RT.eval(read("(def a (x y z) (join z (join y x)))"));
-		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a)")));
-		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a 'f)")));
-		Assertions.assertThrows(EvaluationException.class, () -> RT.eval(read("(a 'f 'g)")));
+		eval(read("(def a (x y z) (join z (join y x)))"));
+		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a)")));
+		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a 'f)")));
+		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a 'f 'g)")));
 	}
 
 	@Test
 	public void testCallVarargsNone() throws IOException {
-		RT.eval(read("(def a xs (car xs))"));
-		assertEquals(read("x"), RT.eval(read("(a 'x 'y 'z)")));
-		assertEquals(read("nil"), RT.eval(read("(a)")));
+		eval(read("(def a xs (car xs))"));
+		assertEquals(read("x"), eval(read("(a 'x 'y 'z)")));
+		assertEquals(read("nil"), eval(read("(a)")));
 	}
 
 	@Test
 	public void testCallVarargs() throws IOException {
-		RT.eval(read("(def a (x . xs) xs)"));
-		assertEquals(read("(two three)"), RT.eval(read("(a 'one 'two 'three)")));
-		assertEquals(read("nil"), RT.eval(read("(a 'one)")));
-		assertThrows(EvaluationException.class, () -> RT.eval(read("(a)")));
+		eval(read("(def a (x . xs) xs)"));
+		assertEquals(read("(two three)"), eval(read("(a 'one 'two 'three)")));
+		assertEquals(read("nil"), eval(read("(a 'one)")));
+		assertThrows(EvaluationException.class, () -> eval(read("(a)")));
 	}
 
 	@Test
 	public void testDefBinary() throws IOException {
-		RT.eval(read("(def a (x y) (join x y))"));
-		assertEquals(read("(x . y)"), RT.eval(read("(a 'x 'y)")));
+		eval(read("(def a (x y) (join x y))"));
+		assertEquals(read("(x . y)"), eval(read("(a 'x 'y)")));
+	}
+
+	@Test
+	public void testDefZeroArity() throws IOException {
+		eval(read("(def a () 'x)"));
+		assertEquals(read("x"), eval(read("(a)")));
+	}
+
+	@Test
+	public void emptyList() throws IOException {
+		assertEquals(read("nil"), read("()"));
 	}
 
 	@Ignore
 	@Test
 	public void testFunctionReturnsFunction() throws IOException {
-		RT.eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
-		System.out.println(RT.eval(read("(a 'f)")));
+		eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
+		System.out.println(eval(read("(a 'f)")));
 	}
-
 
 	// TODO: on calculating optional values - should we also use var bindings from parameters?
 	@Test
@@ -164,41 +182,47 @@ class RTTest {
 		// System.out.println(RT.eval(read("((fn ((o x 'y)) x))")));
 
 		// last arg is missing so default value is presented.
-		assertEquals(symbol("y"), RT.eval(read("((fn (a (o x 'y)) x) 'b)")));
+		assertEquals(symbol("y"), eval(read("((fn (a (o x 'y)) x) 'b)")));
 
 		// last arg is nil so deafult value is not calculated.
-		// assertEquals(NIL, RT.eval(read("((fn (a (o x 'y)) x) 'b nil)")));
+		assertEquals(NIL, RT.eval(read("((fn (a (o x 'y)) x) 'b nil)")));
 
 		// last arg is presented and used.
-		assertEquals(symbol("c"), RT.eval(read("((fn (a (o x 'y)) x) 'b 'c)")));
+		assertEquals(symbol("c"), eval(read("((fn (a (o x 'y)) x) 'b 'c)")));
 
 	}
 
 	@Test
 	public void testClosurePreservesBinding() throws IOException {
-		assertEquals(read("x"), RT.eval(read("((let a 'x (fn v a)) 'y)")));
+		assertEquals(read("x"), eval(read("((let a 'x (fn v a)) 'y)")));
 	}
 
 	@Test
-	public void defLast() throws IOException {
-		Expression read = read("(def last (xs) (if (id (cdr xs) nil) (car xs) (last (cdr xs))        )   )");
-		System.out.println("> " + read);
-		System.out.println(RT.eval(read));
-		System.out.println(RT.eval(read("(last '(a b c d))")));
-
+	public void testLambdaArg() throws IOException {
+		assertEquals(read("y"), eval(read("(let ((nil)) 'x 'y)")));
 	}
 
 	@Test
 	public void testApply() throws IOException {
-		assertEquals(Pair.EMPTY, RT.eval(read("(apply join)")));
+		assertEquals(Pair.EMPTY, eval(read("(apply join)")));
 		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join '())")));
 
 		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join nil)")));
 
-		Expression result1 = RT.eval(read("(apply join '(a b))"));
-		Expression result2 = RT.eval(read("(apply join 'a '(b))"));
+		Expression result1 = eval(read("(apply join '(a b))"));
+		Expression result2 = eval(read("(apply join 'a '(b))"));
 		assertEquals(result1, read("(a . b)"));
 		assertEquals(result2, read("(a . b)"));
+	}
+
+	@Test
+	public void testJoin() throws IOException {
+		assertEquals(Pair.EMPTY, eval(read("(join)")));
+		assertEquals(read("(a)"), eval(read("(join 'a)")));
+		assertEquals(read("(a . b)"), eval(read("(join 'a 'b)")));
+		assertEquals(pair(NIL, symbol("b")), eval(read("(join nil 'b)")));
+		assertEquals(pair(symbol("a"), NIL), eval(read("(join 'a nil)")));
+		assertEquals(NIL, eval(read("(id (join 'a 'b) (join 'a 'b))")));
 	}
 
 	@Test
@@ -209,14 +233,24 @@ class RTTest {
 		     InputStreamReader reader = new InputStreamReader(stream);
 		     PushbackReader pbr = new PushbackReader(reader)) {
 
-			for(int i = 0; i < 100; i++) {
+			for(int i = 0; i < 1000; i++) {
 				System.out.println("reading...");
 				Expression e = Reader.read(pbr);
+				if (e == null) break;
 				System.out.println("    " + i);
 				System.out.println("Evaling " + e);
-				Expression out = RT.eval(e);
+				Expression out = eval(e);
 				System.out.println("> " + out);
 			}
+
+			//System.out.println(eval(read("(let ((nil)) 'x  'z)")));
+
+			// itt megfexik
+			//System.out.println(eval(read("(literal 'nil)")));
+
+			//System.out.println(eval(read("(literal 'a)")));
+			//System.out.println(eval(read("(literal '(nil))")));
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

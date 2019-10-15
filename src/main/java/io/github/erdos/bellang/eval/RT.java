@@ -2,7 +2,6 @@ package io.github.erdos.bellang.eval;
 
 import io.github.erdos.bellang.objects.Expression;
 import io.github.erdos.bellang.objects.Pair;
-import io.github.erdos.bellang.objects.Symbol;
 import io.github.erdos.bellang.reader.Reader;
 
 import java.io.IOException;
@@ -11,17 +10,14 @@ import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Stack;
 
-import static io.github.erdos.bellang.objects.Symbol.CLO;
-import static io.github.erdos.bellang.objects.Symbol.LIT;
 import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.QUOTE;
 
 public class RT {
 
 	private static final ExpressionEvaluatorVisitor visitor = new ExpressionEvaluatorVisitor();
+
 
 	static {
 		try (InputStream stream = RT.class.getResourceAsStream("/prelude.bel");
@@ -69,11 +65,11 @@ public class RT {
 		Deque<Expression> es = new LinkedList<>();
 		coll.forEach(es::push);
 
-		Pair p = null;
+		Expression p = NIL;
 		for (Expression e : es) {
 			p = pair(e, p);
 		}
-		return p;
+		return (Pair) p;
 	}
 
 	public static Pair quote(Expression body) {

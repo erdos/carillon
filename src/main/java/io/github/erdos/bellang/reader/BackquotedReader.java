@@ -53,8 +53,11 @@ public class BackquotedReader {
 				if (pair.car() == UNQUOTE) {
 					return pair.cdr();
 				} else if (  (pair.car() instanceof Pair) && (((Pair)pair.car()).car() == UNQUOTE_SLICING)) {
-					assert pair.cdr() == NIL;
-					return ((Pair)pair.car()).cdr();
+					if (pair.cdr() == NIL) {
+						return ((Pair) pair.car()).cdr();
+					} else {
+						return RT.pair(Symbol.symbol("append"), RT.pair(((Pair) pair.car()).cdr(), RT.list(walk(pair.cdr()))));
+					}
 				} else {
 					return list(JOIN, walk(pair.car()), walk(pair.cdr()));
 				}

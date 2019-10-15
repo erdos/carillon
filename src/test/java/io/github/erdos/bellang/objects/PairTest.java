@@ -33,7 +33,7 @@ class PairTest {
 	@Test
 	public void testToString1() {
 		assertEquals("(c)", pair(symbol("c"), NIL).toString());
-		assertEquals("()", pair(NIL, NIL).toString());
+		assertEquals("(nil)", pair(NIL, NIL).toString());
 		assertEquals("(nil . c)", pair(NIL, symbol("c")).toString());
 		assertEquals("(c . d)", pair(symbol("c"), symbol("d")).toString());
 		assertEquals("(c d)", list(symbol("c"), symbol("d")).toString());

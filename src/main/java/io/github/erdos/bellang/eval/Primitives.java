@@ -29,7 +29,11 @@ public class Primitives {
 			return Pair.EMPTY;
 		} else {
 			Pair args = (Pair) id.cdr();
-			return new Pair(evaluator.appliedTo(args.car()), evaluator.appliedTo(((Pair) args.cdr()).car()));
+			if (args.cdr() == NIL) {
+				return new Pair(evaluator.appliedTo(args.car()), NIL);
+			} else {
+				return new Pair(evaluator.appliedTo(args.car()), evaluator.appliedTo(args.cadr()));
+			}
 		}
 	}
 

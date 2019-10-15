@@ -4,7 +4,6 @@ import io.github.erdos.bellang.eval.RT;
 import io.github.erdos.bellang.objects.Character;
 import io.github.erdos.bellang.objects.Expression;
 import io.github.erdos.bellang.objects.Pair;
-import io.github.erdos.bellang.objects.Symbol;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -13,16 +12,15 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Stack;
 
-import static io.github.erdos.bellang.eval.RT.list;
 import static io.github.erdos.bellang.eval.RT.pair;
 import static io.github.erdos.bellang.eval.RT.quote;
 import static io.github.erdos.bellang.objects.Symbol.NIL;
-import static java.lang.Character.isWhitespace;
 import static io.github.erdos.bellang.objects.Symbol.symbol;
 import static io.github.erdos.bellang.reader.BackquotedReader.readBackquoted;
 import static io.github.erdos.bellang.reader.BackquotedReader.readHole;
+import static io.github.erdos.bellang.reader.SymbolReader.readSymbol;
+import static java.lang.Character.isWhitespace;
 
 public class Reader {
 
@@ -124,11 +122,11 @@ public class Reader {
 		}
 	}
 
-	static Pair readPair(PushbackReader pbr) throws IOException {
+	static Expression readPair(PushbackReader pbr) throws IOException {
 		if (!expectCharacter(pbr, '(')) {
 			return null;
 		} else if (expectCharacter(pbr, ')')) {
-			return Pair.EMPTY;
+			return NIL;
 		} else {
 			Deque<Expression> expressions = new LinkedList<>();
 
@@ -158,52 +156,7 @@ public class Reader {
 				last = pair(e, last);
 			}
 
-			return (Pair) last;
-		}
-	}
-
-	static boolean identifierStart(char read) {
-		return java.lang.Character.isJavaIdentifierStart(read) || read == '=' || read == '-';
-	}
-
-	static boolean identifierPart(char read) {
-		return java.lang.Character.isJavaIdentifierPart(read) || read == '|' || read == '.' || read == '!'|| read == '=' || read == '-';
-	}
-
-	public static Expression readSymbol(PushbackReader pbr) throws IOException {
-		int read = pbr.read();
-
-		if (read == -1) {
-			throw new EOFException();
-		}
-
-		if (!identifierStart((char) read)) {
-			pbr.unread(read);
-			return null;
-		} else {
-
-			StringBuilder builder = new StringBuilder();
-			while (identifierPart((char) read)) {
-				builder.append((char) read);
-
-				read = pbr.read();
-			}
-
-			pbr.unread(read);
-
-			String symbolContents = builder.toString();
-			if (symbolContents.contains("|")) {
-				String[] parts = symbolContents.split("\\|");
-				return list(symbol("t"), symbol(parts[0]), symbol(parts[1]));
-			} else if (symbolContents.contains(".")) {
-				String[] parts = symbolContents.split("\\.");
-				return list(symbol(parts[0]), symbol(parts[1]));
-			} else if (symbolContents.contains("!")) {
-				String[] parts = symbolContents.split("\\!");
-				return list(symbol(parts[0]), quote(symbol(parts[1])));
-			} else {
-				return symbol(symbolContents);
-			}
+			return last;
 		}
 	}
 

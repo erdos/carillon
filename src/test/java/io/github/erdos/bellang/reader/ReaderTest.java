@@ -21,26 +21,26 @@ class ReaderTest {
 
 	@Test
 	public void testReadCharacter() throws IOException {
-		Character result = new Reader().readCharacter(new PushbackReader(new StringReader("\\a")));
+		Expression result = read("\\a");
 		Character expected = new Character('a');
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testReadPairEmpty() throws IOException {
-		assertEquals(Pair.EMPTY, read("()"));
+		assertEquals(NIL, read("()"));
 	}
 
 	@Test
 	public void testReadPairOne() throws IOException {
-		Pair result = new Reader().readPair(new PushbackReader(new StringReader("(\\x)")));
+		Expression result = read("(\\x)");
 		Pair expected = pair(new Character('x'), NIL);
 		assertEquals(expected, result);
 	}
 
 	@Test
 	public void testPairTwo() throws IOException {
-		Pair result = new Reader().readPair(new PushbackReader(new StringReader("(\\x \\y)")));
+		Expression result = read("(\\x \\y)");
 		Pair expected = pair(character('x'), pair(character('y'), NIL));
 		assertEquals(expected, result);
 	}
@@ -107,6 +107,13 @@ class ReaderTest {
 	}
 
 	@Test
+	public void testReadBackticket3() throws IOException {
+		Expression result = read("`(a ,@db c)");
+		Expression expected = read("(join 'a (append db (join 'c nil)))");
+		assertEquals(expected, result);
+	}
+
+	@Test
 	public void testDot1() throws IOException {
 		Expression result = read("((a . b) x)");
 		assertEquals(list(pair(symbol("a"), symbol("b")), symbol("x")), result);
@@ -118,7 +125,7 @@ class ReaderTest {
 		assertEquals(pair(symbol("a"), pair(symbol("b"), symbol("c"))), result);
 	}
 
-	private static Expression read(String s) throws IOException {
+	static Expression read(String s) throws IOException {
 		return new Reader().read(new PushbackReader(new StringReader(s)));
 	}
 }
