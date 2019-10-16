@@ -18,7 +18,7 @@ import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.symbol;
 import static io.github.erdos.bellang.reader.Reader.expectCharacter;
 
-public class BackquotedReader {
+final class BackquotedReader {
 
 	static final Symbol UNQUOTE = symbol("unquote");
 

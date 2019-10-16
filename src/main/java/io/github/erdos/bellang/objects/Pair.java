@@ -9,7 +9,6 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -26,6 +25,7 @@ public final class Pair implements Expression, Iterable<Expression> {
 	private Expression second;
 
 	public Pair(Expression first, Expression second) {
+		assert first != null;
 		assert second != null;
 		this.first = first;
 		this.second = second;

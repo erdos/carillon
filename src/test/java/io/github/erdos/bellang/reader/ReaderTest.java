@@ -46,6 +46,11 @@ class ReaderTest {
 	}
 
 	@Test
+	public void testSymbolLong1() throws IOException {
+		assertEquals((char) 7, ((Character)read("\\bel")).getChar());
+	}
+
+	@Test
 	public void testPairTwoDot() throws IOException {
 		Expression result = read("(\\x . \\y)");
 		Pair expected = pair( character('x'), character('y'));

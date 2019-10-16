@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class Symbol implements Expression {
 
-	private static final ReferenceQueue rq = new ReferenceQueue();
+	private static final ReferenceQueue<Symbol> rq = new ReferenceQueue<>();
 	private static final Map<String, Reference<Symbol>> table = new ConcurrentHashMap<>();
 
 	public static final Symbol QUOTE = symbol("quote");
@@ -73,10 +73,10 @@ public final class Symbol implements Expression {
 
 				for (Map.Entry<String, Reference<Symbol>> e : table.entrySet()) {
 					Reference<Symbol> val = e.getValue();
-					if (val != null && val.get() == null) table.remove(e.getKey(), val);
+					if (val.get() == null) table.remove(e.getKey(), val);
 				}
 			}
-			symbol = table.computeIfAbsent(name, k -> new WeakReference<>(new Symbol(name))).get();
+			symbol = table.computeIfAbsent(name, k -> new WeakReference<>(new Symbol(name), rq)).get();
 		} while (symbol == null);
 		return symbol;
 	}

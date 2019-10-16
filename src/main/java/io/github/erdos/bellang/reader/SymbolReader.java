@@ -12,11 +12,20 @@ import java.io.PushbackReader;
 import static io.github.erdos.bellang.eval.RT.list;
 import static io.github.erdos.bellang.eval.RT.pair;
 
-public final class SymbolReader {
+final class SymbolReader {
 
 	private SymbolReader() {}
 
-	public static Expression readSymbol(PushbackReader pbr) throws IOException {
+	static Expression readSymbol(PushbackReader pbr) throws IOException {
+		String read = readUntilDelimiter(pbr);
+		if (read != null) {
+			return split(read);
+		} else {
+			return null;
+		}
+	}
+
+	static String readUntilDelimiter(PushbackReader pbr) throws IOException {
 		int read = pbr.read();
 
 		if (read == -1) {
@@ -37,7 +46,7 @@ public final class SymbolReader {
 
 			pbr.unread(read);
 
-			return split(builder.toString());
+			return builder.toString();
 		}
 	}
 

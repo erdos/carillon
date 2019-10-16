@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import static io.github.erdos.bellang.eval.EvaluationException.evalException;
 import static io.github.erdos.bellang.objects.Symbol.APPLY;
 import static io.github.erdos.bellang.objects.Symbol.CHARS;
 import static io.github.erdos.bellang.objects.Symbol.GLOBE;
@@ -39,7 +40,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Optional<Variable> maybeVar = Variable.of(pair);
 		if (maybeVar.isPresent()) {
-			return env.get(maybeVar.get()).orElseThrow(() -> new EvaluationException(pair, "Could not resolve variable!"));
+			return env.get(maybeVar.get()).orElseThrow(evalException(pair, "Could not resolve variable!"));
 		}
 
 		Expression sym = pair.car();
@@ -170,6 +171,18 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
+	private static void paramEvalIntoMap(Expression definition, Expression value, Map<Variable, Expression> targetMap, Function<Expression, Expression> mapper) {
+		if (definition instanceof Symbol) {
+			targetMap.put(Variable.of(definition).get(), map(value, mapper));
+		} else if ( ((Pair)definition).car() == O) {
+			// optional parameter
+		} else if (((Pair) definition).car() == T) {
+			// type checked parameter
+		} else {
+			// it is some destructure string?
+		}
+	}
+
 	private static Map<Variable, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper, String debug) {
 		Map<Variable, Expression> result = new HashMap<>();
 		final Expression names0 = names;
@@ -204,20 +217,37 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 					// optional parameter
 					Pair clause = (Pair) name.car();
 
-					if (clause.nth(0) == O) {
+					if (clause.car() == O) {
+						// itt a masodik parameter a valtozo. ezt rekurzivan kene feldolgozni.
+						final Variable paramName = Variable.of(clause.nth(1))
+								.orElseThrow(evalException(clause.nth(1), "Could not resolve variable" + names));
+
+						final Expression defaultValue = clause.nthOrNil(2);
+
 						// optional parameter
 						if (values.isPresent()) {
-							result.put(Variable.of(clause.nth(1)).get(), mapper.apply(values.get().car()));
+							result.put(paramName, mapper.apply(values.get().car()));
 						} else {
-							Variable paramName = Variable.of(clause.nth(1)).get();
-							Expression paramValue = mapper.apply(clause.nthOrNil(2));
-							result.put(paramName, paramValue);
+							result.put(paramName, mapper.apply(defaultValue));
 						}
+					} else if (clause.car() == T) {
+						// TODO: how about t values?
+						// throw new IllegalArgumentException("T values are not supported (yet)!");
+
+						// TODO: apply variable testing here!!!
+						// TODO: apply destructuring here!!!
+
+						Variable paramName = Variable.of(name.cadr())
+								.orElseThrow(evalException(NIL, "Not a valid variable!"));
+						result.put(paramName, mapper.apply(values.get().car()));
+
 					} else {
 						if (! values.isPresent()) {
 							throw new EvaluationException(names, "Can not call with less arguments than expected! " + debug + " param names=" + names0);
 						} else {
-							result.put(Variable.of(name.car()).orElseThrow(() -> new EvaluationException(name.car(), "Not a valid variable!" + name.car())), mapper.apply(values.get().car()));
+							Variable paramName = Variable.of(name.car())
+									.orElseThrow(evalException(name.car(), "Not a valid variable!"));
+							result.put(paramName, mapper.apply(values.get().car()));
 						}
 					}
 				}

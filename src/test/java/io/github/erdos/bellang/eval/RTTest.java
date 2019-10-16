@@ -225,6 +225,17 @@ class RTTest {
 		assertEquals(NIL, eval(read("(id (join 'a 'b) (join 'a 'b))")));
 	}
 
+
+	public void complexArgs() throws IOException {
+		eval(read("(def foo ((o (t (x . y) [caris _ 'a]) '(a . b))) x)"));
+
+		// expecting mistype error
+		eval(read("(foo '(b b))"));
+
+		// expecting a
+		assertEquals(read("a"), read("(foo)"));
+	}
+
 	@Test
 	//@Ignore
 	public void testBel() {
@@ -234,17 +245,18 @@ class RTTest {
 		     PushbackReader pbr = new PushbackReader(reader)) {
 
 			for(int i = 0; i < 1000; i++) {
-				System.out.println("reading...");
+				// System.out.println("reading...");
 				Expression e = Reader.read(pbr);
 				if (e == null) break;
-				System.out.println("    " + i);
-				System.out.println("Evaling " + e);
+				// System.out.println("    " + i);
+				// System.out.println("Evaling " + e);
 				Expression out = eval(e);
-				System.out.println("> " + out);
+				// System.out.println("> " + out);
 			}
 
-			//System.out.println(eval(read("(let ((nil)) 'x  'z)")));
+			// System.out.println(eval(read("(tem point x 0 y 0)")));
 
+			complexArgs();
 			// itt megfexik
 			//System.out.println(eval(read("(literal 'nil)")));
 

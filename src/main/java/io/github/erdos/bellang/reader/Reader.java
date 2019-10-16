@@ -1,11 +1,9 @@
 package io.github.erdos.bellang.reader;
 
 import io.github.erdos.bellang.eval.RT;
-import io.github.erdos.bellang.objects.Character;
 import io.github.erdos.bellang.objects.Expression;
 import io.github.erdos.bellang.objects.Pair;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.Deque;
@@ -19,10 +17,11 @@ import static io.github.erdos.bellang.objects.Symbol.NIL;
 import static io.github.erdos.bellang.objects.Symbol.symbol;
 import static io.github.erdos.bellang.reader.BackquotedReader.readBackquoted;
 import static io.github.erdos.bellang.reader.BackquotedReader.readHole;
+import static io.github.erdos.bellang.reader.CharacterReader.readCharacter;
 import static io.github.erdos.bellang.reader.SymbolReader.readSymbol;
 import static java.lang.Character.isWhitespace;
 
-public class Reader {
+public final class Reader {
 
 	private final Map<Integer, Pair> sharedPairs = new HashMap<>();
 
@@ -104,19 +103,6 @@ public class Reader {
 	private static Pair readQuoted(PushbackReader pbr) throws IOException {
 		if (expectQuote(pbr)) {
 			return quote(read(pbr));
-		} else {
-			return null;
-		}
-	}
-
-	static Character readCharacter(PushbackReader pbr) throws IOException {
-		if (expectBackslash(pbr)) {
-			int read = pbr.read();
-			if (read == -1) {
-				throw new EOFException("EOF while reading character. There is a '\\' at the end of the file!");
-			} else {
-				return new Character((char) read);
-			}
 		} else {
 			return null;
 		}
@@ -210,10 +196,6 @@ public class Reader {
 		} else {
 			return true;
 		}
-	}
-
-	private static boolean expectBackslash(PushbackReader pbr) throws IOException {
-		return expectCharacter(pbr, '\\');
 	}
 
 	private static boolean expectQuote(PushbackReader pbr) throws IOException {
