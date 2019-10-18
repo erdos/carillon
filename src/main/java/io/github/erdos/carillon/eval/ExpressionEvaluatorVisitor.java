@@ -11,6 +11,7 @@ import io.github.erdos.carillon.objects.Symbol;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static io.github.erdos.carillon.eval.EvaluationException.evalException;
 import static io.github.erdos.carillon.objects.Symbol.APPLY;
@@ -46,9 +47,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression sym = pair.car();
 
-		// TODO: call order:
-
-		// TODO: maybe remove it!
+		// TODO: please, consider removing this piece of code.
 		if (Symbol.symbol("err") == sym) {
 			Expression expression = appliedTo(pair.cadr());
 
@@ -136,34 +135,45 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		final Expression head = expression.car().apply(this);
 
 		if (!(head instanceof Pair)) {
-			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression + " scope=" + env.getLexicalScope() + " ");
+			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression);
 		} else if (((Pair) head).cadr() == Symbol.MAC) {
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
-			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x, "");
+			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
 			return this.appliedTo(macroCallResult);
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
-			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo, "expression=" + expression + " lexicalScope=" + env.getLexicalScope());
+			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
 		} else {
 			throw new EvaluationException(expression, "We only evaluate MAC or CLO literals!");
 		}
 	}
 
-	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper, String debug) {
+	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper) {
 		assert fn.car() == LIT;
 		assert fn.cadr() == Symbol.CLO;
 
 		Expression paramDeclarations = fn.cadddr(); // fourth elem
+		Expression body = fn.caddddr(); // fifth elem
 
-		Expression body = fn.caddddr();
-
+		// evaluate arguments if call is not 0-arity.
 		final Expression passedEvaledParamValues = passedParamValues == NIL ? NIL : ((Pair) passedParamValues).stream().map(argsMapper).collect(Pair.collect());
-		final Map<Variable, Expression> newScope = Destructuring.destructureArgs(paramDeclarations, passedEvaledParamValues, argsMapper);
+
+		// new scope
+		final Map<Variable, Pair> scope = Destructuring
+				.destructureArgs(paramDeclarations, passedEvaledParamValues, argsMapper)
+				.entrySet()
+				.stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, v-> new Pair(v.getKey().getExpression(), v.getValue()))) ;
 
 		if (fn.caddr() != NIL) { // local closure
-			((Pair) fn.caddr()).forEach(binding -> newScope.putIfAbsent(Variable.of( ((Pair) binding).car()).get(), ((Pair) binding).cdr()));
+			((Pair) fn.caddr()).forEach(binding -> {
+				Pair bindingPair = (Pair) binding;
+				Variable variable = Variable.enforce(bindingPair.car());
+				Expression value = bindingPair.cdr();
+				scope.putIfAbsent(variable, new Pair(variable.getExpression(), value));
+			});
 		}
 
-		return env.withLexicals(newScope, () -> body.apply(this));
+		return env.withLexicals(scope, () -> body.apply(this));
 	}
 
 	@Override
@@ -209,24 +219,27 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression tail = call.cdr();
 
+		Expression last = NIL;
 		while (tail != NIL) {
 			Pair pair = (Pair) tail;
 
 			if (pair.car() instanceof Symbol) {
 				Symbol key = (Symbol) pair.car();
-				Expression value = pair.cadr().apply(this);
+				Expression value = last = pair.cadr().apply(this);
 				env.set(Variable.enforce(key), value);
 			} else {
-				Expression value = pair.car().apply(this);
-				env.getLastLocation()
-						.orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"))
-						.update(value);
+				// key is ignored on purpose. location contains index to it!
+				Expression key = pair.car().apply(this);
+				Environment.LastLocation location = env.getLastLocation().orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"));
+				Expression value = last = pair.cadr().apply(this);
+
+				location.update(value);
 
 			}
 
 			tail = ((Pair)((Pair)tail).cdr()).cdr();
 		}
 
-		return NIL;
+		return last;
 	}
 }

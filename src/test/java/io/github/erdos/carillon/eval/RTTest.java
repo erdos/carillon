@@ -270,6 +270,13 @@ class RTTest {
 	}
 
 	@Test
+	public void testSetGlobals() throws IOException {
+		assertEquals(read("(a b c)"), eval(read("(set x '(a b c) y x)")));
+		assertEquals(read("z"), eval(read("(set (cadr x) 'z)")));
+		assertEquals(read("(a z c)"), eval(read("y")));
+	}
+
+	@Test
 	public void testWhere1() throws IOException {
 		assertEquals(read("((x . a) d)"), eval(read(" (let x 'a (where x))")));
 	}

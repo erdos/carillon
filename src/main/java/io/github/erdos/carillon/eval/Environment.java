@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class Environment {
 
@@ -20,7 +19,7 @@ public class Environment {
 
 	private final ThreadLocal<LastLocation> lastLocation = ThreadLocal.withInitial(() -> null);
 
-	// ugly hack to support (where x) calls.
+	// adds support to (where x) calls.
 	static final class LastLocation {
 		Pair pair;
 		boolean car;
@@ -121,8 +120,8 @@ public class Environment {
 		return dynamicBindings.get().get(v);
 	}
 
-	public Expression withLexicals(Map<Variable, Expression> lexicalMapping, Supplier<Expression> body) {
-		lexicals.push(lexicalMapping.entrySet().stream().collect(Collectors.toMap(k->k.getKey(), e -> new Pair(e.getKey().getExpression(), e.getValue()))));
+	public Expression withLexicals(Map<Variable, Pair> lexicalMapping, Supplier<Expression> body) {
+		lexicals.push(lexicalMapping);
 		try {
 			return body.get();
 		} finally {
