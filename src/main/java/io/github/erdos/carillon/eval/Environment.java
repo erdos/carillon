@@ -9,13 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Environment {
 
-	private final Map<Variable, Expression> globals = new ConcurrentHashMap<>();
-
+	private final Map<Variable, Pair> globalsChain = new ConcurrentHashMap<>();
+	private final Deque<Map<Variable, Pair>> lexicals = new ArrayDeque<>();
 	private final ThreadLocal<Map<Variable, Expression>> dynamicBindings = ThreadLocal.withInitial(HashMap::new);
 
 	private final ThreadLocal<LastLocation> lastLocation = ThreadLocal.withInitial(() -> null);
@@ -29,14 +29,24 @@ public class Environment {
 			this.pair = p;
 			this.car = c;
 		}
+
+		void update(Expression value) {
+			if (car) {
+				pair.setCar(value);
+			} else {
+				pair.setCdr(value);
+			}
+		}
 	}
 
-	public void whereCar(Pair p) {
+	public Expression whereCar(Pair p) {
 		lastLocation.set(new LastLocation(p, true));
+		return p.car();
 	}
 
-	public void whereCdr(Pair p) {
+	public Expression whereCdr(Pair p) {
 		lastLocation.set(new LastLocation(p, false));
+		return p.cdr();
 	}
 
 	public void whereClear() {
@@ -59,7 +69,8 @@ public class Environment {
 		} else if (getLexicalBinding(v) != null) {
 			// TODO: implementation here.
 		} else {
-			globals.put(v, e);
+			// globals.put(v, e);
+			globalsChain.put(v, new Pair(v.getExpression(), e));
 		}
 	}
 
@@ -80,13 +91,17 @@ public class Environment {
 	}
 
 	public Expression getGlobalBinding(Variable v) {
-		return globals.get(v);
+		if (globalsChain.containsKey(v)) {
+			return whereCdr(globalsChain.get(v));
+		} else {
+			return null;
+		}
 	}
 
 	public Expression getLexicalBinding(Variable v) {
-		for (Map<Variable, Expression> m : lexicals) {
+		for (Map<Variable, Pair> m : lexicals) {
 			if (m.containsKey(v)) {
-				return m.get(v);
+				return whereCdr(m.get(v));
 			}
 		}
 		return null;
@@ -94,9 +109,9 @@ public class Environment {
 
 	public Map<Variable, Expression> getLexicalScope() {
 		Map<Variable, Expression> map = new HashMap<>();
-		for (Map<Variable, Expression> m : lexicals) {
-			for (Map.Entry<Variable, Expression> entry : m.entrySet()) {
-				map.putIfAbsent(entry.getKey(), entry.getValue());
+		for (Map<Variable, Pair> m : lexicals) {
+			for (Map.Entry<Variable, Pair> entry : m.entrySet()) {
+				map.putIfAbsent(entry.getKey(), entry.getValue().cdr());
 			}
 		}
 		return map;
@@ -106,11 +121,8 @@ public class Environment {
 		return dynamicBindings.get().get(v);
 	}
 
-
-	private final Deque<Map<Variable, Expression>> lexicals = new ArrayDeque<>();
-
 	public Expression withLexicals(Map<Variable, Expression> lexicalMapping, Supplier<Expression> body) {
-		lexicals.push(lexicalMapping);
+		lexicals.push(lexicalMapping.entrySet().stream().collect(Collectors.toMap(k->k.getKey(), e -> new Pair(e.getKey().getExpression(), e.getValue()))));
 		try {
 			return body.get();
 		} finally {
@@ -135,10 +147,7 @@ public class Environment {
 	}
 
 	public Expression getGlobe() {
-		return globals.entrySet()
-				.stream()
-				.map(entry -> RT.pair(entry.getKey().getExpression(), entry.getValue()))
-				.collect(Pair.collectPairOrNil());
+		return globalsChain.values().stream().collect(Pair.collectPairOrNil());
 	}
 
 	public Expression getScope() {

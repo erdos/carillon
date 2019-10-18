@@ -1,7 +1,6 @@
 package io.github.erdos.carillon.eval;
 
 import io.github.erdos.carillon.eval.EvaluationException.UnboundSymbolException;
-import io.github.erdos.carillon.eval.Environment.LastLocation;
 import io.github.erdos.carillon.objects.Character;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.ExpressionVisitor;
@@ -216,19 +215,14 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			if (pair.car() instanceof Symbol) {
 				Symbol key = (Symbol) pair.car();
 				Expression value = pair.cadr().apply(this);
-				env.set(Variable.of(key).get(), value);
+				env.set(Variable.enforce(key), value);
 			} else {
 				Expression value = pair.car().apply(this);
-				LastLocation location = env.getLastLocation().orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"));
+				env.getLastLocation()
+						.orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"))
+						.update(value);
 
-				if (location.car) {
-					location.pair.setCar(value);
-				} else {
-					location.pair.setCdr(value);
-				}
 			}
-
-
 
 			tail = ((Pair)((Pair)tail).cdr()).cdr();
 		}

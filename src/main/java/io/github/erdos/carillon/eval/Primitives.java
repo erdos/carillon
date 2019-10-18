@@ -44,8 +44,7 @@ public class Primitives {
 		if (result == NIL) {
 			return NIL;
 		} else if (result instanceof Pair) {
-			env.whereCar((Pair) result);
-			return ((Pair) result).car();
+			return env.whereCar((Pair) result);
 		} else {
 			throw new EvaluationException(result, "You can call (car .) only on a pair or nil!");
 		}
@@ -57,8 +56,7 @@ public class Primitives {
 		if (result == NIL) {
 			return NIL;
 		} else if (result instanceof Pair) {
-			env.whereCdr((Pair) result);
-			return ((Pair) result).cdr();
+			return env.whereCdr((Pair) result);
 		} else {
 			throw new EvaluationException(result, "You can call (cdr .) only on a pair or nil.");
 		}
