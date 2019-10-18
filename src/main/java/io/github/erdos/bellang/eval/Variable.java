@@ -43,6 +43,10 @@ final class Variable {
 		});
 	}
 
+	public static Variable enforce(Expression e) {
+		return of(e).orElseThrow(EvaluationException.evalException(e, "Not a valid parameter!"));
+	}
+
 	private final Expression wrapped;
 
 	private Variable(Expression wrapped) {

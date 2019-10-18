@@ -105,17 +105,18 @@ public class Primitives {
 		return Symbol.symbol(builder.toString());
 	}
 
-	Pair evalNom(Pair pair, ExpressionEvaluatorVisitor expressionEvaluatorVisitor) {
+	Pair evalNom(Pair pair, ExpressionEvaluatorVisitor evaluator) {
 		assert Symbol.NOM.equals(pair.car());
-
-		String name = ((Symbol) pair.cadr()).name;
-
-		Pair result = null;
-		for (int i = name.length() - 1; i >= 0; i--) {
-			result = new Pair(new Character(name.charAt(i)), result);
+		if (pair.cdr() == NIL) {
+			throw new EvaluationException.WrongArityException(NIL, NIL);
+		} else if (((Pair) pair.cdr()).cdr() != NIL) {
+			throw new EvaluationException.WrongArityException(NIL, NIL);
+		} else {
+			return ((Symbol) evaluator.appliedTo(pair.cadr()))
+					.name
+					.chars()
+					.mapToObj(x -> Character.character((char) x)).collect(Pair.collect());
 		}
-
-		return result;
 	}
 
 	//	 Returns either t or nil randomly.

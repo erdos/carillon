@@ -7,6 +7,7 @@ import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Stream;
 import io.github.erdos.bellang.objects.Symbol;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -157,7 +158,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression body = fn.caddddr();
 
-		final Map<Variable, Expression> newScope = mapArgs(paramDeclarations, passedParamValues, argsMapper, debug);
+		final Expression passedEvaledParamValues = passedParamValues == NIL ? NIL : ((Pair) passedParamValues).stream().map(argsMapper).collect(Pair.collect());
+		final Map<Variable, Expression> newScope = Destructuring.destructureArgs(paramDeclarations, passedEvaledParamValues, argsMapper);
 
 		if (fn.caddr() != NIL) { // local closure
 			((Pair) fn.caddr()).forEach(binding -> newScope.putIfAbsent(Variable.of( ((Pair) binding).car()).get(), ((Pair) binding).cdr()));
@@ -171,103 +173,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 	}
 
-	private static void paramEvalIntoMap(Expression definition, Expression value, Map<Variable, Expression> targetMap, Function<Expression, Expression> mapper) {
-		if (definition instanceof Symbol) {
-			targetMap.put(Variable.of(definition).get(), map(value, mapper));
-		} else if ( ((Pair)definition).car() == O) {
-			// optional parameter
-		} else if (((Pair) definition).car() == T) {
-			// type checked parameter
-		} else {
-			// it is some destructure string?
-		}
-	}
 
-	private static Map<Variable, Expression> mapArgs(Expression names, Expression values0, Function<Expression, Expression> mapper, String debug) {
-		Map<Variable, Expression> result = new HashMap<>();
-		final Expression names0 = names;
-
-		Optional<Pair> values = values0 == NIL ? Optional.empty() : Optional.of((Pair) values0);
-
-		// TODO: is it needed here?
-		if (names.equals(RT.pair(NIL, NIL))) {
-			// TODO: itt ellenorizni kene a values ertekeit is!
-			return result;
-		}
-
-		while (names != NIL) {
-			if (names instanceof Symbol) {
-				// last item is just a symbol.
-				if (values.isPresent()) {
-					result.put(Variable.of(names).get(), map(values.get(), mapper));
-				} else {
-					result.put(Variable.of(names).get(), NIL);
-				}
-				break;
-			} else {
-				Pair name = (Pair) names;
-
-				if ((name.car() instanceof Symbol)) {
-					if (! values.isPresent()) {
-						throw new EvaluationException(names, "Can not call with less arguments than expected! " + debug + " param names=" + names0);
-					} else {
-						result.put(Variable.of(name.car()).get(), mapper.apply(values.get().car()));
-					}
-				} else {
-					// optional parameter
-					Pair clause = (Pair) name.car();
-
-					if (clause.car() == O) {
-						// itt a masodik parameter a valtozo. ezt rekurzivan kene feldolgozni.
-						final Variable paramName = Variable.of(clause.nth(1))
-								.orElseThrow(evalException(clause.nth(1), "Could not resolve variable" + names));
-
-						final Expression defaultValue = clause.nthOrNil(2);
-
-						// optional parameter
-						if (values.isPresent()) {
-							result.put(paramName, mapper.apply(values.get().car()));
-						} else {
-							result.put(paramName, mapper.apply(defaultValue));
-						}
-					} else if (clause.car() == T) {
-						// TODO: how about t values?
-						// throw new IllegalArgumentException("T values are not supported (yet)!");
-
-						// TODO: apply variable testing here!!!
-						// TODO: apply destructuring here!!!
-
-						Variable paramName = Variable.of(name.cadr())
-								.orElseThrow(evalException(NIL, "Not a valid variable!"));
-						result.put(paramName, mapper.apply(values.get().car()));
-
-					} else {
-						if (! values.isPresent()) {
-							throw new EvaluationException(names, "Can not call with less arguments than expected! " + debug + " param names=" + names0);
-						} else {
-							Variable paramName = Variable.of(name.car())
-									.orElseThrow(evalException(name.car(), "Not a valid variable!"));
-							result.put(paramName, mapper.apply(values.get().car()));
-						}
-					}
-				}
-
-				names = name.cdr();
-				values = values.map(x -> x.cdr() == NIL ? null : (Pair) x.cdr());
-			}
-		}
-
-		return result;
-	}
-
-	private static Expression map(Expression p, Function<Expression, Expression> f) {
-		if (p == NIL) {
-			return NIL;
-		} else {            // TODO: remove recursion!
-			Pair pair = (Pair) p;
-			return RT.pair(f.apply(pair.car()), map(pair.cdr(), f));
-		}
-	}
 
 	@Override
 	public Expression stream(Stream stream) {

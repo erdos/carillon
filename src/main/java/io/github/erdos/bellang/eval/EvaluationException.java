@@ -13,4 +13,11 @@ public class EvaluationException extends RuntimeException {
 	public static Supplier<EvaluationException> evalException(Expression e, String msg) {
 		return () -> new EvaluationException(e, msg);
 	}
+
+	public static final class WrongArityException extends EvaluationException {
+
+		public WrongArityException(Expression arguments, Expression values) {
+			super(arguments, "Function called with wrong arity!");
+		}
+	}
 }

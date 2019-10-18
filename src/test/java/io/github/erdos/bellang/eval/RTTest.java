@@ -1,11 +1,11 @@
 package io.github.erdos.bellang.eval;
 
+import io.github.erdos.bellang.eval.EvaluationException.WrongArityException;
 import io.github.erdos.bellang.objects.Expression;
 import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Symbol;
 import io.github.erdos.bellang.reader.Reader;
 import org.junit.Ignore;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -56,8 +56,7 @@ class RTTest {
 
 	@Test
 	public void testCdr() throws IOException {
-		Expression expression = read("(cdr '(a b))");
-		assertEquals(list(symbol("b")), eval(expression));
+		assertEquals(list(symbol("b")), eval(read("(cdr '(a b))")));
 	}
 
 
@@ -130,11 +129,20 @@ class RTTest {
 	}
 
 	@Test
+	public void testNullaryDefinition() throws IOException { // this is the definition of nullary functions!
+		eval(read("(def nullary () 'ok)"));
+		assertEquals(symbol("ok"), eval(read("(nullary)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(nullary 'x)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(nullary 'x 'y)")));
+
+	}
+
+	@Test
 	public void testCallLessArgs() throws IOException {
 		eval(read("(def a (x y z) (join z (join y x)))"));
-		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a)")));
-		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a 'f)")));
-		Assertions.assertThrows(EvaluationException.class, () -> eval(read("(a 'f 'g)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(a)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(a 'f)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(a 'f 'g)")));
 	}
 
 	@Test
@@ -149,7 +157,7 @@ class RTTest {
 		eval(read("(def a (x . xs) xs)"));
 		assertEquals(read("(two three)"), eval(read("(a 'one 'two 'three)")));
 		assertEquals(read("nil"), eval(read("(a 'one)")));
-		assertThrows(EvaluationException.class, () -> eval(read("(a)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(a)")));
 	}
 
 	@Test
@@ -193,6 +201,16 @@ class RTTest {
 	}
 
 	@Test
+	public void fnCallMultipleOptionals() throws IOException {
+		// no opotional arg is missing
+		assertEquals(read("(a b)"), eval(read("((fn ((o x 'X) (o y 'Y)) (join x (join y nil))) 'a 'b)")));
+		// last opotional arg is missing
+		assertEquals(read("(b Y)"), eval(read("((fn ((o x 'X) (o y 'Y)) (join x (join y nil))) 'b)")));
+		// both optional args are missing
+		assertEquals(read("(X Y)"), eval(read("((fn ((o x 'X) (o y 'Y)) (join x (join y nil))))")));
+	}
+
+	@Test
 	public void testClosurePreservesBinding() throws IOException {
 		assertEquals(read("x"), eval(read("((let a 'x (fn v a)) 'y)")));
 	}
@@ -225,6 +243,14 @@ class RTTest {
 		assertEquals(NIL, eval(read("(id (join 'a 'b) (join 'a 'b))")));
 	}
 
+	@Test
+	public void testNom() throws IOException {
+		assertEquals(read("(\\n \\i \\l)"), eval(read("(nom nil)")));
+		assertEquals(read("(\\x \\y \\z)"), eval(read("(nom 'xyz)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(nom)")));
+		assertThrows(WrongArityException.class, () -> eval(read("(nom 'asdf 'xyze)")));
+	}
+
 
 	public void complexArgs() throws IOException {
 		eval(read("(def foo ((o (t (x . y) [caris _ 'a]) '(a . b))) x)"));
@@ -233,7 +259,7 @@ class RTTest {
 		eval(read("(foo '(b b))"));
 
 		// expecting a
-		assertEquals(read("a"), read("(foo)"));
+		assertEquals(read("a"), eval(read("(foo)")));
 	}
 
 	@Test
@@ -249,7 +275,7 @@ class RTTest {
 				Expression e = Reader.read(pbr);
 				if (e == null) break;
 				// System.out.println("    " + i);
-				// System.out.println("Evaling " + e);
+				System.out.println("Evaling " + e);
 				Expression out = eval(e);
 				// System.out.println("> " + out);
 			}

@@ -1,5 +1,8 @@
 package io.github.erdos.bellang.objects;
 
+import io.github.erdos.bellang.eval.EvaluationException;
+import io.github.erdos.bellang.eval.RT;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -130,15 +133,25 @@ public final class Pair implements Expression, Iterable<Expression> {
 
 			@Override
 			public BiConsumer<State, Expression> accumulator() {
-				return (p, e) -> {
+				return (s, e) -> {
+					Pair p = RT.list(e);
 
+					if (s.first == null) {
+						s.first = p;
+						s.last = p;
+					} else if (s.last != null) {
+						s.last.setCdr(p);
+					}
+					s.last = p;
 				};
 			}
 
 			@Override
 			public BinaryOperator<State> combiner() {
 				return (a, b) -> {
-					a.last.setCdr(b.first);
+					if (a.last != null) {
+						a.last.setCdr(b.first);
+					}
 					a.last = b.last;
 					return a;
 				};
@@ -146,7 +159,13 @@ public final class Pair implements Expression, Iterable<Expression> {
 
 			@Override
 			public Function<State, Pair> finisher() {
-				return state -> state.first;
+				return state -> {
+						if (state.first == null) {
+							throw new EvaluationException(NIL, "Can not collect empty pair!");
+						} else {
+						return state.first;
+						}
+				};
 			}
 
 			@Override
