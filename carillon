@@ -1,0 +1,11 @@
+#! /bin/sh
+
+set -e
+
+export CARILLON_ARGS=`echo "$@"`
+
+mvn clean -q
+mvn compile -DskipTests -q
+mvn exec:java -q -Dexec.mainClass="io.github.erdos.carillon.Main" -Dexec.args="$CARILLON_ARGS"
+
+

@@ -1,7 +1,0 @@
-#! /bin/sh
-
-set -e
-
-mvn clean -q
-mvn compile -DskipTests -q
-mvn exec:java -q -Dexec.mainClass="io.github.erdos.bellang.Main" -Dexec.args="arg0 arg1 arg2"
