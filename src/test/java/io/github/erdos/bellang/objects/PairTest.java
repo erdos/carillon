@@ -68,5 +68,7 @@ class PairTest {
 	@Test()
 	public void testCollectEmpty() {
 		assertThrows(EvaluationException.class, () -> new ArrayList<Expression>().stream().collect(Pair.collect()));
+
+		assertEquals(NIL, new ArrayList<Expression>().stream().collect(Pair.collectPairOrNil()));
 	}
 }

@@ -170,20 +170,16 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return symbol;
 		}
 
-		Optional<Expression> bound = env.get(Variable.of(symbol).get());
+		Optional<Expression> bound = env.get(Variable.enforce(symbol));
 
 		if (bound.isPresent()) {
 			return bound.get();
 		} else if (symbol == CHARS) {
 			return Constants.CHARS_LIST;
 		} else if (symbol == GLOBE) {
-			throw new EvaluationException.FeatureNotImplementedException(symbol);
+			return env.getGlobe();
 		} else if (symbol == SCOPE) {
-			Expression tail = NIL;
-			for (Map.Entry<Variable, Expression> entry : env.getLexicalScope().entrySet()) {
-				tail = RT.pair(RT.pair(entry.getKey().getExpression(), entry.getValue()), tail);
-			}
-			return tail;
+			return env.getScope();
 		} else if (symbol == INS) {
 			throw new EvaluationException.FeatureNotImplementedException(symbol);
 		} else if (symbol == OUTS) {

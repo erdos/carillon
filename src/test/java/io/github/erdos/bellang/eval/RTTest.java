@@ -275,7 +275,7 @@ class RTTest {
 				Expression e = Reader.read(pbr);
 				if (e == null) break;
 				// System.out.println("    " + i);
-				System.out.println("Evaling " + e);
+				// System.out.println("Evaling " + e);
 				Expression out = eval(e);
 				// System.out.println("> " + out);
 			}

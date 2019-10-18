@@ -1,6 +1,7 @@
 package io.github.erdos.bellang.eval;
 
 import io.github.erdos.bellang.objects.Expression;
+import io.github.erdos.bellang.objects.Pair;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -9,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+
+import static io.github.erdos.bellang.objects.Symbol.NIL;
 
 public class Evaluator {
 
@@ -85,5 +88,20 @@ public class Evaluator {
 		} finally {
 			lexicals.pop();
 		}
+	}
+
+	public Expression getGlobe() {
+		return globals.entrySet()
+				.stream()
+				.map(entry -> RT.pair(entry.getKey().getExpression(), entry.getValue()))
+				.collect(Pair.collectPairOrNil());
+	}
+
+	public Expression getScope() {
+		return getLexicalScope()
+				.entrySet()
+				.stream()
+				.map(entry -> RT.pair(entry.getKey().getExpression(), entry.getValue()))
+				.collect(Pair.collectPairOrNil());
 	}
 }

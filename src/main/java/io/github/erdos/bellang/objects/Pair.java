@@ -15,6 +15,7 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -124,8 +125,16 @@ public final class Pair implements Expression, Iterable<Expression> {
 	}
 
 	public static Collector<Expression, State, Pair> collect() {
+		return Collectors.collectingAndThen(collectPairOrNil(), x -> {
+			if (x instanceof Pair) {
+				return (Pair) x;
+			} else {
+				throw new EvaluationException(x, "This is not a proper list!");
+			}});
+	}
 
-		return new Collector<Expression, State, Pair>() {
+	public static Collector<Expression, State, Expression> collectPairOrNil() {
+		return new Collector<Expression, State, Expression>() {
 			@Override
 			public Supplier<State> supplier() {
 				return State::new;
@@ -158,13 +167,13 @@ public final class Pair implements Expression, Iterable<Expression> {
 			}
 
 			@Override
-			public Function<State, Pair> finisher() {
+			public Function<State, Expression> finisher() {
 				return state -> {
-						if (state.first == null) {
-							throw new EvaluationException(NIL, "Can not collect empty pair!");
-						} else {
+					if (state.first == null) {
+						return Symbol.NIL;
+					} else {
 						return state.first;
-						}
+					}
 				};
 			}
 
@@ -174,6 +183,7 @@ public final class Pair implements Expression, Iterable<Expression> {
 			}
 		};
 	}
+
 
 	public Expression car() {
 		return first;
