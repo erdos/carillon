@@ -37,24 +37,27 @@ public class Primitives {
 		}
 	}
 
-	Expression evalCar(Pair pair, ExpressionEvaluatorVisitor evaluator) {
+	Expression evalCar(Pair pair, Environment env, ExpressionEvaluatorVisitor evaluator) {
 		assert Symbol.CAR.equals(pair.car());
 		Expression result = evaluator.appliedTo(pair.cadr());
+
 		if (result == NIL) {
 			return NIL;
 		} else if (result instanceof Pair) {
+			env.whereCar((Pair) result);
 			return ((Pair) result).car();
 		} else {
 			throw new EvaluationException(result, "You can call (car .) only on a pair or nil!");
 		}
 	}
 
-	Expression evalCdr(Pair pair, ExpressionEvaluatorVisitor evaluator) {
+	Expression evalCdr(Pair pair, Environment env, ExpressionEvaluatorVisitor evaluator) {
 		assert Symbol.CDR.equals(pair.car());
 		Expression result = evaluator.appliedTo(pair.cadr());
 		if (result == NIL) {
 			return NIL;
 		} else if (result instanceof Pair) {
+			env.whereCdr((Pair) result);
 			return ((Pair) result).cdr();
 		} else {
 			throw new EvaluationException(result, "You can call (cdr .) only on a pair or nil.");

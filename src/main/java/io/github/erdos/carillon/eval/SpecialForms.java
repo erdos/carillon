@@ -1,11 +1,15 @@
 package io.github.erdos.carillon.eval;
 
+import io.github.erdos.carillon.eval.Environment.LastLocation;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Pair;
 import io.github.erdos.carillon.objects.Symbol;
 
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.Optional;
+
+import static io.github.erdos.carillon.objects.Symbol.symbol;
 
 public class SpecialForms {
 	public Expression evalIf(Pair cond, ExpressionEvaluatorVisitor visitor) {
@@ -59,7 +63,7 @@ public class SpecialForms {
 		return visitor.appliedTo(last);
 	}
 
-	public Expression evalDyn(Pair lit, Evaluator env, ExpressionEvaluatorVisitor evaluator) {
+	public Expression evalDyn(Pair lit, Environment env, ExpressionEvaluatorVisitor evaluator) {
 		Variable variable = Variable.enforce(lit.nthOrNil(1));
 		Expression value = evaluator.appliedTo(lit.nth(2));
 		Expression body = lit.nth(3);
@@ -67,8 +71,29 @@ public class SpecialForms {
 		return env.withDynamicBinding(variable, value, () -> evaluator.appliedTo(body));
 	}
 
+	/**
+	 * Evaluates x. If its value comes from a pair, returns a list of that
+	 * pair and either a or d depending on whether the value is stored in
+	 * the car or cdr. Signals an error if the value of x doesn't come from
+	 * a pair.
+	 */
+	public Expression evalWhere(Pair x, Environment env, ExpressionEvaluatorVisitor evaluator) {
+		Expression param = x.nthOrNil(1);
+
+		Expression value = evaluator.appliedTo(param);
+
+		Optional<LastLocation> location = env.getLastLocation();
+
+		if (location.isPresent()) {
+			Pair parent = location.get().pair;
+			Symbol loc = location.get().car ? symbol("a") : symbol("d");
+			return RT.list(parent, loc);
+		} else {
+			throw new EvaluationException(value, "Value does not come from a pair!");
+		}
+	}
+
 	// where -- wtf
-	// dyn -- dynamic binding
 	// after -- sorrendiseg megtartasa
 	// ccc -- wtf
 	// thread -- wtf

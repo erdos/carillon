@@ -1,6 +1,7 @@
 package io.github.erdos.carillon.eval;
 
 import io.github.erdos.carillon.eval.EvaluationException.UnboundSymbolException;
+import io.github.erdos.carillon.eval.Environment.LastLocation;
 import io.github.erdos.carillon.objects.Character;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.ExpressionVisitor;
@@ -28,7 +29,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	private final Primitives primitives = new Primitives();
 	private final SpecialForms specialForms = new SpecialForms();
 
-	private final Evaluator env = new Evaluator();
+	private final Environment env = new Environment();
 
 	// see: ev function in bel.bel
 	public Expression appliedTo(Expression param) {
@@ -38,6 +39,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	@Override
 	public Expression pair(Pair pair) {
 
+		env.whereClear();
 		Optional<Variable> maybeVar = Variable.of(pair);
 		if (maybeVar.isPresent()) {
 			return env.get(maybeVar.get()).orElseThrow(evalException(pair, "Could not resolve variable!"));
@@ -81,11 +83,11 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		}
 
 		if (Symbol.CAR.equals(sym)) {
-			return primitives.evalCar(pair, this);
+			return primitives.evalCar(pair, env, this);
 		}
 
 		if (Symbol.CDR.equals(sym)) {
-			return primitives.evalCdr(pair, this);
+			return primitives.evalCdr(pair, env, this);
 		}
 
 		if (Symbol.TYPE.equals(sym)) {
@@ -122,6 +124,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		if (Symbol.DYN.equals(sym)) {
 			return specialForms.evalDyn(pair, env, this);
+		}
+
+		if (Symbol.WHERE.equals(sym)) {
+			return specialForms.evalWhere(pair, env, this);
 		}
 
 		return evalLitCall(pair);
@@ -168,6 +174,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	@Override
 	public Expression symbol(Symbol symbol) {
+		env.whereClear();
 		// lookup order: dynamic, scope, globe, defaults.
 
 		if (symbol == T || symbol == NIL || symbol == O || symbol == APPLY) {
@@ -205,9 +212,23 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		while (tail != NIL) {
 			Pair pair = (Pair) tail;
-			Symbol key = (Symbol) pair.car();
-			Expression value = pair.cadr().apply(this);
-			env.set(Variable.of(key).get(), value);
+
+			if (pair.car() instanceof Symbol) {
+				Symbol key = (Symbol) pair.car();
+				Expression value = pair.cadr().apply(this);
+				env.set(Variable.of(key).get(), value);
+			} else {
+				Expression value = pair.car().apply(this);
+				LastLocation location = env.getLastLocation().orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"));
+
+				if (location.car) {
+					location.pair.setCar(value);
+				} else {
+					location.pair.setCdr(value);
+				}
+			}
+
+
 
 			tail = ((Pair)((Pair)tail).cdr()).cdr();
 		}

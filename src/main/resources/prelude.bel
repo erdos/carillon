@@ -15,4 +15,9 @@
 
 (mac let (k v body) `((fn (,k) ,body) ,v))
 
+(def cadr (x) (car (cdr x)))
+(def caar (x) (car (car x)))
+(def cdar (x) (cdr (car x)))
+(def cddr (x) (cdr (cdr x)))
+
 (def nom (x) (nom x))

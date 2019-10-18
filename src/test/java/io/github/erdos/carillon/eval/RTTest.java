@@ -265,14 +265,19 @@ class RTTest {
 
 	@Test
 	public void testSetLocation() throws IOException {
-		Expression result = eval(read(" (let x '(a b c) (let n (set (cadr x) 'z) x))"));
+		Expression result = eval(read("(let x '(a b c) (set (cadr x) 'z) x)"));
 		assertEquals(read("(a z c)"), result);
 	}
 
 	@Test
 	public void testWhere1() throws IOException {
-		Expression result = eval(read(" (let x 'a (where x))"));
-		assertEquals(read("((x . a) d)"), result);
+		assertEquals(read("((x . a) d)"), eval(read(" (let x 'a (where x))")));
+	}
+
+	@Test
+	public void testWhere2() throws IOException {
+		eval(read("(set x '(a b c))"));
+		assertEquals(read("((b c) a)"), eval(read("(where (cadr x))")));
 	}
 
 	@Test
@@ -283,7 +288,7 @@ class RTTest {
 	}
 
 	@Test
-	//@Ignore
+	@org.junit.Ignore
 	public void testBel() {
 
 		try (InputStream stream = RT.class.getResourceAsStream("/bel.bel");

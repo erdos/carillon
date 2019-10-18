@@ -63,6 +63,8 @@ public final class Symbol implements Expression {
 
 	public static final Symbol SET = symbol("set");
 
+	public static final Symbol WHERE = symbol("where");
+
 	public static Symbol symbol(String name) {
 		Symbol symbol;
 		do {

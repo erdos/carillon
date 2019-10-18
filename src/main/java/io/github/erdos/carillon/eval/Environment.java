@@ -9,13 +9,43 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-public class Evaluator {
+public class Environment {
 
 	private final Map<Variable, Expression> globals = new ConcurrentHashMap<>();
 
 	private final ThreadLocal<Map<Variable, Expression>> dynamicBindings = ThreadLocal.withInitial(HashMap::new);
+
+	private final ThreadLocal<LastLocation> lastLocation = ThreadLocal.withInitial(() -> null);
+
+	// ugly hack to support (where x) calls.
+	static final class LastLocation {
+		Pair pair;
+		boolean car;
+
+		LastLocation(Pair p, boolean c) {
+			this.pair = p;
+			this.car = c;
+		}
+	}
+
+	public void whereCar(Pair p) {
+		lastLocation.set(new LastLocation(p, true));
+	}
+
+	public void whereCdr(Pair p) {
+		lastLocation.set(new LastLocation(p, false));
+	}
+
+	public void whereClear() {
+		lastLocation.remove();
+	}
+
+	public Optional<LastLocation> getLastLocation() {
+		return Optional.ofNullable(lastLocation.get());
+	}
 
 	/**
 	 * If you do an assignment to a variable that has one of the three kinds
