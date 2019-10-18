@@ -11,7 +11,6 @@
 (def car (x) (car x))
 (def cdr (x) (cdr x))
 
-(mac quote (y) (join 'quote (join y nil)))
 (mac lit (x) `(lit ,x))
 
 (mac let (k v body) `((fn (,k) ,body) ,v))

@@ -67,9 +67,9 @@ class RTTest {
 
 
 	@Test
-	public void dfdf() throws IOException {
-		//  ????
-		assertEquals(symbol("x"), eval(read("((fn (f a) (f a)) quote 'x)")));
+	public void quoteSymbolIsUnbound() {
+		assertThrows(EvaluationException.UnboundSymbolException.class,
+				() -> eval(read("((fn (f a) (f a)) quote 'x)")));
 	}
 
 	@Test

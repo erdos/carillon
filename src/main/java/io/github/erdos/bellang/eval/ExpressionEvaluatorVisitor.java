@@ -1,5 +1,6 @@
 package io.github.erdos.bellang.eval;
 
+import io.github.erdos.bellang.eval.EvaluationException.UnboundSymbolException;
 import io.github.erdos.bellang.objects.Character;
 import io.github.erdos.bellang.objects.Expression;
 import io.github.erdos.bellang.objects.ExpressionVisitor;
@@ -7,8 +8,6 @@ import io.github.erdos.bellang.objects.Pair;
 import io.github.erdos.bellang.objects.Stream;
 import io.github.erdos.bellang.objects.Symbol;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -211,7 +210,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			throw new RuntimeException("Can not use outs yet.");
 		}
 
-		throw new EvaluationException(symbol, "Symbol not bound: " + symbol);
+		throw new UnboundSymbolException(symbol);
 	}
 
 	@Override
