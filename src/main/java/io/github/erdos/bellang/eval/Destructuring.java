@@ -41,7 +41,6 @@ public final class Destructuring {
 			return result;
 		} else {
 			Map<Variable, Expression> result = new HashMap<>();
-			if (!(value instanceof Pair)) throw new RuntimeException("PASDASD" + value + " name=" + name);
 			destructurePairs((Pair) name, (Pair) value, result, mapper);
 			return result;
 		}

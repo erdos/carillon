@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class Evaluator {
 
@@ -52,14 +53,11 @@ public class Evaluator {
 	}
 
 	public Expression getLexicalBinding(Variable v) {
-
-		// TODO: itt lehet, hogy forditva kellene berani!
 		for (Map<Variable, Expression> m : lexicals) {
 			if (m.containsKey(v)) {
 				return m.get(v);
 			}
 		}
-
 		return null;
 	}
 
@@ -80,11 +78,12 @@ public class Evaluator {
 
 	private final Deque<Map<Variable, Expression>> lexicals = new ArrayDeque<>();
 
-	public void pushLexicals(Map<Variable, Expression> lexicalMapping) {
+	public Expression withLexicals(Map<Variable, Expression> lexicalMapping, Supplier<Expression> body) {
 		lexicals.push(lexicalMapping);
-	}
-
-	public void popLexicals() {
-		lexicals.pop();
+		try {
+			return body.get();
+		} finally {
+			lexicals.pop();
+		}
 	}
 }

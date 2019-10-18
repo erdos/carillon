@@ -27,4 +27,10 @@ public class EvaluationException extends RuntimeException {
 			super(symbol, "Unbound symbol!");
 		}
 	}
+
+	public static final class FeatureNotImplementedException extends EvaluationException {
+		public FeatureNotImplementedException(Expression expression) {
+			super(expression, "This feature is not implemented!");
+		}
+	}
 }

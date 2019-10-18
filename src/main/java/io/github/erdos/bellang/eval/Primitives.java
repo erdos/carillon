@@ -128,14 +128,7 @@ public class Primitives {
 	// TODO: what is the return value here?
 	Expression sys(Pair pair, ExpressionEvaluatorVisitor evaluator) {
 		assert Symbol.SYS.equals(pair.car());
-
-/*		try {
-			java.lang.Runtime.getRuntime().exec(((Symbol) pair.cadr().apply(evaluator)).name);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}*/
-throw new RuntimeException("Not yet implemented!");
-//		return null;
+		throw new EvaluationException.FeatureNotImplementedException(Symbol.SYS);
 	}
 
 	/**

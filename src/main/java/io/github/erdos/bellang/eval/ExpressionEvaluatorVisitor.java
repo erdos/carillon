@@ -124,28 +124,18 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	}
 
 	private Expression evalLitCall(Pair expression) {
-
-		// System.out.println("Evaling lit call: " + expression + " with " + env.getLexicalScope());
-
-		Expression head = expression.car().apply(this);
+		final Expression head = expression.car().apply(this);
 
 		if (!(head instanceof Pair)) {
 			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression + " scope=" + env.getLexicalScope() + " ");
-		}
-
-		if (((Pair) head).cadr() == Symbol.MAC) {
+		} else if (((Pair) head).cadr() == Symbol.MAC) {
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
-			try {
-				Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x, "");
-				return this.appliedTo(macroCallResult);
-			} catch (IllegalArgumentException e) {
-				System.out.println("Original full expression: " + expression);
-				throw e;
-			}
+			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x, "");
+			return this.appliedTo(macroCallResult);
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo, "expression=" + expression + " lexicalScope=" + env.getLexicalScope());
 		} else {
-			throw new IllegalArgumentException("We only evaluate MAC or CLO literals!");
+			throw new EvaluationException(expression, "We only evaluate MAC or CLO literals!");
 		}
 	}
 
@@ -164,40 +154,30 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			((Pair) fn.caddr()).forEach(binding -> newScope.putIfAbsent(Variable.of( ((Pair) binding).car()).get(), ((Pair) binding).cdr()));
 		}
 
-		env.pushLexicals(newScope);
-		try {
-			return body.apply(this);
-		} finally {
-			env.popLexicals();
-		}
+		return env.withLexicals(newScope, () -> body.apply(this));
 	}
-
-
 
 	@Override
 	public Expression stream(Stream stream) {
-		throw new RuntimeException("Stream not supported yet!");
+		throw new EvaluationException.FeatureNotImplementedException(stream);
 	}
 
 	@Override
 	public Expression symbol(Symbol symbol) {
-		// TODO: lookup order: dynamic, scope, globe, defaults.
+		// lookup order: dynamic, scope, globe, defaults.
 
 		if (symbol == T || symbol == NIL || symbol == O || symbol == APPLY) {
 			return symbol;
 		}
-		//else if (symbol == JOIN) {
-		// TODO: not sure if it is semantically correct.
-		//	return symbol;
-		//}
 
 		Optional<Expression> bound = env.get(Variable.of(symbol).get());
-		if (bound.isPresent()) return bound.get();
 
-		if (symbol == CHARS) {
+		if (bound.isPresent()) {
+			return bound.get();
+		} else if (symbol == CHARS) {
 			return Constants.CHARS_LIST;
 		} else if (symbol == GLOBE) {
-			throw new RuntimeException("Can not use globe yet.");
+			throw new EvaluationException.FeatureNotImplementedException(symbol);
 		} else if (symbol == SCOPE) {
 			Expression tail = NIL;
 			for (Map.Entry<Variable, Expression> entry : env.getLexicalScope().entrySet()) {
@@ -205,12 +185,12 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			}
 			return tail;
 		} else if (symbol == INS) {
-			throw new RuntimeException("Can not use ins yet.");
+			throw new EvaluationException.FeatureNotImplementedException(symbol);
 		} else if (symbol == OUTS) {
-			throw new RuntimeException("Can not use outs yet.");
+			throw new EvaluationException.FeatureNotImplementedException(symbol);
+		} else {
+			throw new UnboundSymbolException(symbol);
 		}
-
-		throw new UnboundSymbolException(symbol);
 	}
 
 	@Override
