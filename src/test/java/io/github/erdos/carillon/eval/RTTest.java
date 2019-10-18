@@ -252,6 +252,7 @@ class RTTest {
 	}
 
 
+	@Test
 	public void complexArgs() throws IOException {
 		eval(read("(def foo ((o (t (x . y) [caris _ 'a]) '(a . b))) x)"));
 
@@ -260,6 +261,25 @@ class RTTest {
 
 		// expecting a
 		assertEquals(read("a"), eval(read("(foo)")));
+	}
+
+	@Test
+	public void testSetLocation() throws IOException {
+		Expression result = eval(read(" (let x '(a b c) (let n (set (cadr x) 'z) x))"));
+		assertEquals(read("(a z c)"), result);
+	}
+
+	@Test
+	public void testWhere1() throws IOException {
+		Expression result = eval(read(" (let x 'a (where x))"));
+		assertEquals(read("((x . a) d)"), result);
+	}
+
+	@Test
+	public void testDyn() throws IOException {
+		eval(read("(set x 'a)"));
+		assertEquals(read("(z . b)"), eval(read("(dyn x 'z (join x 'b))")));
+		assertEquals(read("a"), eval(read("x")));
 	}
 
 	@Test
@@ -279,16 +299,6 @@ class RTTest {
 				Expression out = eval(e);
 				// System.out.println("> " + out);
 			}
-
-			// System.out.println(eval(read("(tem point x 0 y 0)")));
-
-			complexArgs();
-			// itt megfexik
-			//System.out.println(eval(read("(literal 'nil)")));
-
-			//System.out.println(eval(read("(literal 'a)")));
-			//System.out.println(eval(read("(literal '(nil))")));
-
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

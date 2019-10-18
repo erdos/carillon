@@ -59,7 +59,7 @@ public final class Symbol implements Expression {
 	public static final Symbol CLO = symbol("clo"); // closure
 	public static final Symbol MAC = symbol("mac"); // macro expression
 
-	public static final Symbol FN = symbol("fn");
+	public static final Symbol DYN = symbol("dyn");
 
 	public static final Symbol SET = symbol("set");
 

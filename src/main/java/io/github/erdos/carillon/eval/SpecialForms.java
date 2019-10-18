@@ -59,6 +59,14 @@ public class SpecialForms {
 		return visitor.appliedTo(last);
 	}
 
+	public Expression evalDyn(Pair lit, Evaluator env, ExpressionEvaluatorVisitor evaluator) {
+		Variable variable = Variable.enforce(lit.nthOrNil(1));
+		Expression value = evaluator.appliedTo(lit.nth(2));
+		Expression body = lit.nth(3);
+
+		return env.withDynamicBinding(variable, value, () -> evaluator.appliedTo(body));
+	}
+
 	// where -- wtf
 	// dyn -- dynamic binding
 	// after -- sorrendiseg megtartasa

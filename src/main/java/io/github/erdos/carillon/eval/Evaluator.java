@@ -88,6 +88,22 @@ public class Evaluator {
 		}
 	}
 
+	public Expression withDynamicBinding(Variable variable, Expression value, Supplier<Expression> body) {
+		Expression valueBefore = dynamicBindings.get().get(variable);
+
+		dynamicBindings.get().put(variable, value);
+
+		try {
+			return body.get();
+		} finally {
+			if (valueBefore != null) {
+				dynamicBindings.get().put(variable, valueBefore);
+			} else {
+				dynamicBindings.get().remove(variable);
+			}
+		}
+	}
+
 	public Expression getGlobe() {
 		return globals.entrySet()
 				.stream()

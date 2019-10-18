@@ -120,6 +120,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return set(pair);
 		}
 
+		if (Symbol.DYN.equals(sym)) {
+			return specialForms.evalDyn(pair, env, this);
+		}
+
 		return evalLitCall(pair);
 	}
 
