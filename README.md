@@ -1,4 +1,4 @@
-# Bel Langauge Interpreter
+# Carillon - Bel Langauge Interpreter
 
 This is a simple interpreter for Paul Graham's [Bel language](http://paulgraham.com/bel.html).
 
@@ -7,7 +7,16 @@ The aim of this implementation is to support bootstrapping the language using th
 
 ## Getting started
 
-Clone this repo and run the `./bel` script.
+Download a JAR file from the Releases section of this repository. Run the program with the jar command.
+
+To run the REPL: `jar ./carillon-0.1.0.jar --repl`
+
+To eval a bel file: `jar ./carillon-0.1.0.jar FILE1.bel`
+
+You can also load a file before entering the REPL. First, download the `bel.bel` file from the PG's site. Then run:
+`java ./carillon-0.1.0.jar bel.bel --repl`
+
+For development, you will need Java JDK 8 and Maven.
 
 
 ## License
