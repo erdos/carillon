@@ -1,9 +1,11 @@
 package io.github.erdos.carillon.reader;
 
 import io.github.erdos.carillon.eval.RT;
+import io.github.erdos.carillon.objects.Character;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Pair;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.Deque;
@@ -40,6 +42,11 @@ public final class Reader {
 			return e;
 		}
 
+		e = readString(pbr);
+		if (e != null) {
+			return e;
+		}
+
 		e = readPair(pbr);
 		if (e != null) {
 			return e;
@@ -66,6 +73,30 @@ public final class Reader {
 		}
 
 		return null;
+	}
+
+	private static Expression readString(PushbackReader pbr) throws IOException {
+		if (expectCharacter(pbr, '"')) {
+
+			final StringBuilder content = new StringBuilder();
+			int i;
+
+			while (true) {
+				i = pbr.read();
+
+				if (i == '"') {
+					break;
+				} else if (i == -1) {
+					throw new EOFException("End of input while reading string!");
+				} else {
+					content.append((char) i);
+				}
+			}
+
+			return content.toString().chars().mapToObj(x-> Character.character((char) x)).collect(Pair.collectPairOrNil());
+		} else {
+			return null;
+		}
 	}
 
 	private static Expression readFnAbbreviation(PushbackReader pbr) throws IOException {

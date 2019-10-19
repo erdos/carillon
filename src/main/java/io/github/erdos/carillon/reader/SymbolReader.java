@@ -115,7 +115,7 @@ final class SymbolReader {
 	}
 
 	static boolean identifierStart(char read) {
-		return ! (java.lang.Character.isWhitespace(read) || read == '`' || read == '\'' || read == '@' || read == ',' || read == '(' || read == '[' || read == ')' || read == ']' || read == ';' || read == '\\');
+		return ! (java.lang.Character.isWhitespace(read) || read == '"' || read == '`' || read == '\'' || read == '@' || read == ',' || read == '(' || read == '[' || read == ')' || read == ']' || read == ';' || read == '\\');
 	}
 
 	static boolean identifierPart(char read) {

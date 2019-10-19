@@ -130,6 +130,12 @@ class ReaderTest {
 		assertEquals(pair(symbol("a"), pair(symbol("b"), symbol("c"))), result);
 	}
 
+	@Test
+	public void readString() throws IOException {
+		assertEquals(read("(\\a \\b \\c)"), read("\"abc\""));
+		assertEquals(read("()"), read("\"\""));
+	}
+
 	static Expression read(String s) throws IOException {
 		return new Reader().read(new PushbackReader(new StringReader(s)));
 	}
