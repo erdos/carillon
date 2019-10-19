@@ -12,11 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class SymbolReaderTest {
 
 	@Test
-	public void readSymbol1() throws IOException {
-		System.out.println(read("asdf"));
-	}
-
-	@Test
 	public void testSymbolCompose() throws IOException {
 		Expression result = read("a:b:c");
 		assertEquals(ReaderTest.read("(compose a b c)"), result);

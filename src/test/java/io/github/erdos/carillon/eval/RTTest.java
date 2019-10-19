@@ -9,8 +9,6 @@ import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.io.StringReader;
 
@@ -44,24 +42,24 @@ class RTTest {
 	}
 
 	@Test
-	public void testSymbolsIdentical() throws IOException {
+	public void testSymbolsIdentical() {
 		Expression expression = read("(id 'alabama 'alabama)");
 		assertEquals(symbol("t"), eval(expression));
 	}
 
 	@Test
-	public void testCar() throws IOException {
+	public void testCar() {
 		assertEquals(symbol("a"), eval(read("(car '(a b))")));
 	}
 
 	@Test
-	public void testCdr() throws IOException {
+	public void testCdr() {
 		assertEquals(list(symbol("b")), eval(read("(cdr '(a b))")));
 	}
 
 
 	@Test
-	public void asdf() throws IOException {
+	public void asdf() {
 		assertEquals(symbol("x"), eval(read("((fn (a) a)  'x)")));
 	}
 
@@ -81,7 +79,7 @@ class RTTest {
 	}
 
 	@Test
-	public void closure1() throws IOException {
+	public void closure1() {
 		String input = "((lit clo nil (x) (car x)) '(a b))";
 		Expression inputExpression = read(input);
 		assertEquals(symbol("a"), eval(inputExpression));
@@ -93,12 +91,12 @@ class RTTest {
 	}
 
 	@Test
-	public void join1() throws IOException {
+	public void join1() {
 		assertEquals(read("(a b)"), eval(read("(join 'a (join 'b nil))")));
 	}
 
 	@Test
-	public void if2() throws IOException {
+	public void if2() {
 		assertEquals(read("b"), eval(read("(if nil 'a 't 'b)")));
 		assertEquals(read("a"), eval(read("(if 't 'a)")));
 		assertEquals(read("a"), eval(read("(if 't 'a 'b)")));
@@ -109,27 +107,27 @@ class RTTest {
 	}
 
 	@Test
-	public void testMacUnary() throws IOException {
+	public void testMacUnary() {
 		eval(read("(mac a (x) (join 'quote (join x nil)))"));
 		assertEquals(read("x"), eval(read("(a x)")));
 	}
 
 
 	@Test
-	public void testMacOr() throws IOException {
+	public void testMacOr() {
 		eval(read("(def no (x) (id x nil))"));
 		eval(read("(mac or (a b) (if (no a) b a))"));
 		assertEquals(read("b"), eval(read("(or nil 'b)")));
 	}
 
 	@Test
-	public void testDefUnary() throws IOException {
+	public void testDefUnary() {
 		eval(read("(def a (x) (join x x))"));
 		assertEquals(pair(symbol("x"), symbol("x")), eval(read("(a 'x)")));
 	}
 
 	@Test
-	public void testNullaryDefinition() throws IOException { // this is the definition of nullary functions!
+	public void testNullaryDefinition() { // this is the definition of nullary functions!
 		eval(read("(def nullary () 'ok)"));
 		assertEquals(symbol("ok"), eval(read("(nullary)")));
 		assertThrows(WrongArityException.class, () -> eval(read("(nullary 'x)")));
@@ -138,7 +136,7 @@ class RTTest {
 	}
 
 	@Test
-	public void testCallLessArgs() throws IOException {
+	public void testCallLessArgs() {
 		eval(read("(def a (x y z) (join z (join y x)))"));
 		assertThrows(WrongArityException.class, () -> eval(read("(a)")));
 		assertThrows(WrongArityException.class, () -> eval(read("(a 'f)")));
@@ -146,14 +144,14 @@ class RTTest {
 	}
 
 	@Test
-	public void testCallVarargsNone() throws IOException {
+	public void testCallVarargsNone() {
 		eval(read("(def a xs (car xs))"));
 		assertEquals(read("x"), eval(read("(a 'x 'y 'z)")));
 		assertEquals(read("nil"), eval(read("(a)")));
 	}
 
 	@Test
-	public void testCallVarargs() throws IOException {
+	public void testCallVarargs() {
 		eval(read("(def a (x . xs) xs)"));
 		assertEquals(read("(two three)"), eval(read("(a 'one 'two 'three)")));
 		assertEquals(read("nil"), eval(read("(a 'one)")));
@@ -161,32 +159,32 @@ class RTTest {
 	}
 
 	@Test
-	public void testDefBinary() throws IOException {
+	public void testDefBinary() {
 		eval(read("(def a (x y) (join x y))"));
 		assertEquals(read("(x . y)"), eval(read("(a 'x 'y)")));
 	}
 
 	@Test
-	public void testDefZeroArity() throws IOException {
+	public void testDefZeroArity() {
 		eval(read("(def a () 'x)"));
 		assertEquals(read("x"), eval(read("(a)")));
 	}
 
 	@Test
-	public void emptyList() throws IOException {
+	public void emptyList() {
 		assertEquals(read("nil"), read("()"));
 	}
 
 	@Ignore
 	@Test
-	public void testFunctionReturnsFunction() throws IOException {
+	public void testFunctionReturnsFunction() {
 		eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
 		System.out.println(eval(read("(a 'f)")));
 	}
 
 	// TODO: on calculating optional values - should we also use var bindings from parameters?
 	@Test
-	public void fnCallWithOptional() throws IOException {
+	public void fnCallWithOptional() {
 		// System.out.println(RT.eval(read("((fn ((o x 'y)) x))")));
 
 		// last arg is missing so default value is presented.
@@ -201,7 +199,7 @@ class RTTest {
 	}
 
 	@Test
-	public void fnCallMultipleOptionals() throws IOException {
+	public void fnCallMultipleOptionals() {
 		// no opotional arg is missing
 		assertEquals(read("(a b)"), eval(read("((fn ((o x 'X) (o y 'Y)) (join x (join y nil))) 'a 'b)")));
 		// last opotional arg is missing
@@ -211,17 +209,17 @@ class RTTest {
 	}
 
 	@Test
-	public void testClosurePreservesBinding() throws IOException {
+	public void testClosurePreservesBinding() {
 		assertEquals(read("x"), eval(read("((let a 'x (fn v a)) 'y)")));
 	}
 
 	@Test
-	public void testLambdaArg() throws IOException {
+	public void testLambdaArg() {
 		assertEquals(read("y"), eval(read("(let ((nil)) 'x 'y)")));
 	}
 
 	@Test
-	public void testApply() throws IOException {
+	public void testApply() {
 		assertEquals(Pair.EMPTY, eval(read("(apply join)")));
 		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join '())")));
 
@@ -234,7 +232,7 @@ class RTTest {
 	}
 
 	@Test
-	public void testJoin() throws IOException {
+	public void testJoin() {
 		assertEquals(Pair.EMPTY, eval(read("(join)")));
 		assertEquals(read("(a)"), eval(read("(join 'a)")));
 		assertEquals(read("(a . b)"), eval(read("(join 'a 'b)")));
@@ -244,7 +242,7 @@ class RTTest {
 	}
 
 	@Test
-	public void testNom() throws IOException {
+	public void testNom() {
 		assertEquals(read("(\\n \\i \\l)"), eval(read("(nom nil)")));
 		assertEquals(read("(\\x \\y \\z)"), eval(read("(nom 'xyz)")));
 		assertThrows(WrongArityException.class, () -> eval(read("(nom)")));
@@ -253,7 +251,7 @@ class RTTest {
 
 
 	@Test
-	public void complexArgs() throws IOException {
+	public void complexArgs() {
 		eval(read("(def foo ((o (t (x . y) [caris _ 'a]) '(a . b))) x)"));
 
 		// expecting mistype error
@@ -264,59 +262,35 @@ class RTTest {
 	}
 
 	@Test
-	public void testSetLocation() throws IOException {
-		Expression result = eval(read("(let x '(a b c) (set (cadr x) 'z) x)"));
-		assertEquals(read("(a z c)"), result);
-	}
-
-	@Test
-	public void testSetGlobals() throws IOException {
+	public void testSetGlobals() {
 		assertEquals(read("(a b c)"), eval(read("(set x '(a b c) y x)")));
 		assertEquals(read("z"), eval(read("(set (cadr x) 'z)")));
 		assertEquals(read("(a z c)"), eval(read("y")));
 	}
 
 	@Test
-	public void testWhere1() throws IOException {
+	public void testWhere1() {
 		assertEquals(read("((x . a) d)"), eval(read(" (let x 'a (where x))")));
 	}
 
 	@Test
-	public void testWhere2() throws IOException {
+	public void testWhere2() {
 		eval(read("(set x '(a b c))"));
 		assertEquals(read("((b c) a)"), eval(read("(where (cadr x))")));
 	}
 
 	@Test
-	public void testDyn() throws IOException {
+	public void testDyn() {
 		eval(read("(set x 'a)"));
 		assertEquals(read("(z . b)"), eval(read("(dyn x 'z (join x 'b))")));
 		assertEquals(read("a"), eval(read("x")));
 	}
 
-	@Test
-	@org.junit.Ignore
-	public void testBel() {
-
-		try (InputStream stream = RT.class.getResourceAsStream("/bel.bel");
-		     InputStreamReader reader = new InputStreamReader(stream);
-		     PushbackReader pbr = new PushbackReader(reader)) {
-
-			for(int i = 0; i < 1000; i++) {
-				// System.out.println("reading...");
-				Expression e = Reader.read(pbr);
-				if (e == null) break;
-				// System.out.println("    " + i);
-				// System.out.println("Evaling " + e);
-				Expression out = eval(e);
-				// System.out.println("> " + out);
-			}
+	private static Expression read(String s) {
+		try {
+			return new Reader().read(new PushbackReader(new StringReader(s)));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	private static Expression read(String s) throws IOException {
-		return new Reader().read(new PushbackReader(new StringReader(s)));
 	}
 }
