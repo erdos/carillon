@@ -79,6 +79,12 @@ class BelTest {
 		assertEquals(read("\\A"), eval("(nchar 65)"));
 	}
 
+	@Test
+	public void testCut() {
+		assertEquals(read("(\\o \\o \\b)"), eval("(cut \"foobar\" 2 4)"));
+		// TODO: also (cut "foobar" 2 -1) -> "ooba"
+	}
+
 	private static Expression eval(String s) {
 		return RT.eval(read(s));
 	}

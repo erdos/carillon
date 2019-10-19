@@ -139,7 +139,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		final Expression head = expression.car().apply(this);
 
 		if (!(head instanceof Pair)) {
-			throw new EvaluationException(head, "Expected literal expression, instead we got: " + head + " original expression was; " + expression);
+			throw new EvaluationException(head, "Expected literal expression in head. Original expression was=" + expression);
 		} else if (((Pair) head).cadr() == Symbol.MAC) {
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
 			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
@@ -147,6 +147,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
 		} else if (((Pair) head).cadr() == Symbol.NUM) {
+			// TODO: rewrite to use virfns instead. use it to lookup which macro to run.
+			//
 
 			Expression nominatorExpr = ((Pair) ((Pair) head).caddr()).cadr();
 			// TODO: check for sign, denominator, complex part.

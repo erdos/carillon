@@ -95,7 +95,7 @@ public final class Reader {
 				}
 			}
 
-			return content.toString().chars().mapToObj(x-> Character.character((char) x)).collect(Pair.collectPairOrNil());
+			return quote(content.toString().chars().mapToObj(x-> Character.character((char) x)).collect(Pair.collectPairOrNil()));
 		} else {
 			return null;
 		}
