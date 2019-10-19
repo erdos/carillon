@@ -259,6 +259,13 @@ class RTTest {
 	}
 
 	@Test
+	public void testSetWithNumber() {
+		eval(read("(set x '(a b c))"));
+		assertEquals(read("z"), eval(read("(set (1 x) 'z)")));
+		assertEquals(read("(a z c)"), eval(read("x")));
+	}
+
+	@Test
 	public void testWhere1() {
 		assertEquals(read("((x . a) d)"), eval(read(" (let x 'a (where x))")));
 	}
