@@ -27,8 +27,6 @@ final class SymbolReader {
 		String read = readUntilDelimiter(pbr);
 		if (read == null) {
 			return null;
-		} else if (Pattern.matches("[\\+\\-]?\\d+", read)) {
-			return toInteger(read);
 		} else {
 			return split(read);
 		}
@@ -130,7 +128,15 @@ final class SymbolReader {
 		if (s.startsWith("~")) {
 			return RT.list(symbol("compose"), symbol("no"), prependedTildes(s.substring(1)));
 		} else {
-			return symbol(s);
+			return handle(s);
+		}
+	}
+
+	private static Expression handle(String read) {
+		if (Pattern.matches("[\\+\\-]?\\d+", read)) {
+			return toInteger(read);
+		} else {
+			return symbol(read);
 		}
 	}
 
