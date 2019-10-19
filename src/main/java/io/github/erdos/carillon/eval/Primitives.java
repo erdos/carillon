@@ -94,7 +94,7 @@ public class Primitives {
 		return newValue;
 	}
 
-	Expression evaCxr(Pair pair, ExpressionEvaluatorVisitor evaluator) {
+	Expression evaXdr(Pair pair, ExpressionEvaluatorVisitor evaluator) {
 		Expression newValue = pair.cadr().apply(evaluator);
 		pair.setCdr(newValue);
 		return newValue;

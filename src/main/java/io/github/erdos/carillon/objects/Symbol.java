@@ -45,7 +45,7 @@ public final class Symbol implements Expression {
 
 
 	public static final Symbol XAR = symbol("xar");
-	public static final Symbol CXR = symbol("cxr");
+	public static final Symbol XDR = symbol("xdr");
 
 	public static final Symbol SYM = symbol("sym");
 

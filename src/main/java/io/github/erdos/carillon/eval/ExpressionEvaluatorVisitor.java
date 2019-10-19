@@ -96,8 +96,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return primitives.evalXar(pair, this);
 		}
 
-		if (Symbol.CXR.equals(sym)) {
-			return primitives.evaCxr(pair, this);
+		if (Symbol.XDR.equals(sym)) {
+			return primitives.evaXdr(pair, this);
 		}
 
 		if (Symbol.SYM.equals(sym)) {
