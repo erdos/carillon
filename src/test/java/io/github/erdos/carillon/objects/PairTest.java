@@ -65,6 +65,13 @@ class PairTest {
 		assertEquals(symbol("c"), p.nth(2));
 	}
 
+
+	@Test
+	public void testCollect1() {
+		Pair p = Stream.of(symbol("a")).collect(Pair.collect());
+		assertEquals(pair(symbol("a"), NIL), p);
+	}
+
 	@Test()
 	public void testCollectEmpty() {
 		assertThrows(EvaluationException.class, () -> new ArrayList<Expression>().stream().collect(Pair.collect()));

@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 public class Environment {
 
-	private final Map<Variable, Pair> globalsChain = new ConcurrentHashMap<>();
+	private final Map<Variable, Pair> globals = new ConcurrentHashMap<>();
 	private final Deque<Map<Variable, Pair>> lexicals = new ArrayDeque<>();
 	private final ThreadLocal<Map<Variable, Expression>> dynamicBindings = ThreadLocal.withInitial(HashMap::new);
 
@@ -65,11 +65,10 @@ public class Environment {
 	public void set(Variable v, Expression e) {
 		if (dynamicBindings.get().containsKey(v)) {
 			dynamicBindings.get().put(v, e);
-		} else if (getLexicalBinding(v) != null) {
-			// TODO: implementation here.
+		} else if (swapLexicalBinding(v, e)) {
+			// already swapped, we are all good.
 		} else {
-			// globals.put(v, e);
-			globalsChain.put(v, new Pair(v.getExpression(), e));
+			globals.put(v, new Pair(v.getExpression(), e));
 		}
 	}
 
@@ -90,8 +89,8 @@ public class Environment {
 	}
 
 	public Expression getGlobalBinding(Variable v) {
-		if (globalsChain.containsKey(v)) {
-			return whereCdr(globalsChain.get(v));
+		if (globals.containsKey(v)) {
+			return whereCdr(globals.get(v));
 		} else {
 			return null;
 		}
@@ -106,14 +105,14 @@ public class Environment {
 		return null;
 	}
 
-	public Map<Variable, Expression> getLexicalScope() {
-		Map<Variable, Expression> map = new HashMap<>();
+	public boolean swapLexicalBinding(Variable v, Expression newValue) {
 		for (Map<Variable, Pair> m : lexicals) {
-			for (Map.Entry<Variable, Pair> entry : m.entrySet()) {
-				map.putIfAbsent(entry.getKey(), entry.getValue().cdr());
+			if (m.containsKey(v)) {
+				m.get(v).setCdr(newValue);
+				return true;
 			}
 		}
-		return map;
+		return false;
 	}
 
 	public Expression getDynamicBinding(Variable v) {
@@ -146,14 +145,17 @@ public class Environment {
 	}
 
 	public Expression getGlobe() {
-		return globalsChain.values().stream().collect(Pair.collectPairOrNil());
+		return globals.values().stream().collect(Pair.collectPairOrNil());
 	}
 
 	public Expression getScope() {
-		return getLexicalScope()
-				.entrySet()
-				.stream()
-				.map(entry -> RT.pair(entry.getKey().getExpression(), entry.getValue()))
-				.collect(Pair.collectPairOrNil());
+		Map<Variable, Expression> map = new HashMap<>();
+		for (Map<Variable, Pair> m : lexicals) {
+			for (Map.Entry<Variable, Pair> entry : m.entrySet()) {
+				map.putIfAbsent(entry.getKey(), entry.getValue());
+			}
+		}
+
+		return map.values().stream().collect(Pair.collectPairOrNil());
 	}
 }

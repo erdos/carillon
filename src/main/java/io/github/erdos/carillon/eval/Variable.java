@@ -67,4 +67,9 @@ final class Variable {
 	public int hashCode() {
 		return wrapped.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return "<" + wrapped + ((wrapped instanceof Pair) ? "@" + wrapped.hashCode() : "") + ">";
+	}
 }

@@ -178,14 +178,10 @@ class RTTest {
 	@Test
 	public void testFunctionReturnsFunction() {
 		eval(read("(def a (x) (join join (join x nil)))")); // a (reduce join ns) teljesen valid scenario!
-		System.out.println(eval(read("(a 'f)")));
 	}
 
-	// TODO: on calculating optional values - should we also use var bindings from parameters?
 	@Test
 	public void fnCallWithOptional() {
-		// System.out.println(RT.eval(read("((fn ((o x 'y)) x))")));
-
 		// last arg is missing so default value is presented.
 		assertEquals(symbol("y"), eval(read("((fn (a (o x 'y)) x) 'b)")));
 
@@ -194,7 +190,6 @@ class RTTest {
 
 		// last arg is presented and used.
 		assertEquals(symbol("c"), eval(read("((fn (a (o x 'y)) x) 'b 'c)")));
-
 	}
 
 	@Test
@@ -220,14 +215,10 @@ class RTTest {
 	@Test
 	public void testApply() {
 		assertEquals(Pair.EMPTY, eval(read("(apply join)")));
-		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join '())")));
-
-		// assertEquals(Pair.EMPTY, RT.eval(read("(apply join nil)")));
-
-		Expression result1 = eval(read("(apply join '(a b))"));
-		Expression result2 = eval(read("(apply join 'a '(b))"));
-		assertEquals(result1, read("(a . b)"));
-		assertEquals(result2, read("(a . b)"));
+		assertEquals(read("(nil)"), RT.eval(read("(apply join nil)")));
+		assertEquals(read("(a . b)"), eval(read("(apply join '(a b))")));
+		assertEquals(read("(A . B)"), eval(read("(apply (lit clo () (a b) (join a b)) '(A B))")));
+		assertEquals(read("(A . B)"), eval(read("(apply (lit clo () (a b) (join a b)) 'A '(B))")));
 	}
 
 	@Test

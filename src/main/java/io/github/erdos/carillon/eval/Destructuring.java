@@ -129,7 +129,7 @@ public final class Destructuring {
 		}
 
 		if (nameIterator != NIL) { // last item is a symbol!
-			destructure(nameIterator, valueIterator.map(x -> (Expression) x).orElse(NIL), mappings, mapper);
+			destructure(nameIterator, valueIterator.orElse(NIL), mappings, mapper);
 		} else if (valueIterator.isPresent()) {
 			throw new WrongArityException(NIL, NIL);
 		}

@@ -5,10 +5,11 @@ import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Pair;
 import io.github.erdos.carillon.objects.Symbol;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static io.github.erdos.carillon.objects.Symbol.NIL;
 import static io.github.erdos.carillon.objects.Symbol.symbol;
 
 public class SpecialForms {
@@ -20,18 +21,18 @@ public class SpecialForms {
 		while (cond != null) {
 			Expression evaled = visitor.appliedTo(cond.car());
 
-			if (evaled != Symbol.NIL) {
+			if (evaled != NIL) {
 				return visitor.appliedTo(cond.cadr());
-			} else if (((Pair) cond.cdr()).cdr() == Symbol.NIL) {
+			} else if (((Pair) cond.cdr()).cdr() == NIL) {
 				break;
-			} else if (   ((Pair)((Pair) cond.cdr()).cdr()).cdr() == Symbol.NIL) {
+			} else if (   ((Pair)((Pair) cond.cdr()).cdr()).cdr() == NIL) {
 				return visitor.appliedTo(cond.caddr());
 			} else {
 				cond = (Pair) ((Pair) cond.cdr()).cdr();
 			}
 		}
 
-		return Symbol.NIL;
+		return NIL;
 	}
 
 	public Expression evalQuote(Pair quoted) {
@@ -46,21 +47,23 @@ public class SpecialForms {
 
 	public Expression evalApply(Pair lit, ExpressionEvaluatorVisitor visitor) {
 		assert Symbol.APPLY.equals(lit.car());
+		// TODO: this is really not effective.
 
-		Deque<Expression> stack = new LinkedList<>();
-		((Pair)lit.cdr()).forEach(stack::push);
+		List<Expression> items = ((Pair) lit.cdr()).stream().map(visitor::appliedTo).collect(Collectors.toList());
 
-		if (stack.size() > 1) {
-			((Pair) stack.pop().apply(visitor)).forEach(x -> stack.push(RT.quote(x)));
+		if (items.size() > 1) {
+			Expression last = items.get(items.size() - 1);
+
+			items.remove(items.size() - 1);
+
+			if (last instanceof Pair) {
+				((Pair) last).forEach(items::add);
+			} else {
+				assert last == NIL;
+			}
 		}
 
-		Expression last = Symbol.NIL;
-
-		for(Expression e : stack) {
-			last = RT.pair(e, last);
-		}
-
-		return visitor.appliedTo(last);
+		return items.stream().map(RT::quote).collect(Pair.collect()).apply(visitor);
 	}
 
 	public Expression evalDyn(Pair lit, Environment env, ExpressionEvaluatorVisitor evaluator) {

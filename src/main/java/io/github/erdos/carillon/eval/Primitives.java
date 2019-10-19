@@ -89,14 +89,18 @@ public class Primitives {
 	}
 
 	Expression evalXar(Pair pair, ExpressionEvaluatorVisitor evaluator) {
-		Expression newValue = pair.cadr().apply(evaluator);
-		pair.setCar(newValue);
+		assert Symbol.XAR == pair.car();
+		Pair target = (Pair) pair.cadr().apply(evaluator);
+		Expression newValue = pair.caddr().apply(evaluator);
+		target.setCar(newValue);
 		return newValue;
 	}
 
 	Expression evaXdr(Pair pair, ExpressionEvaluatorVisitor evaluator) {
-		Expression newValue = pair.cadr().apply(evaluator);
-		pair.setCdr(newValue);
+		assert Symbol.XDR == pair.car();
+		Pair target = (Pair) pair.cadr().apply(evaluator);
+		Expression newValue = pair.caddr().apply(evaluator);
+		target.setCdr(newValue);
 		return newValue;
 	}
 

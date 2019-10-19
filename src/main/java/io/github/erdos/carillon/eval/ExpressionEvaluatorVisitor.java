@@ -38,8 +38,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 	@Override
 	public Expression pair(Pair pair) {
-
 		env.whereClear();
+
 		Optional<Variable> maybeVar = Variable.of(pair);
 		if (maybeVar.isPresent()) {
 			return env.get(maybeVar.get()).orElseThrow(evalException(pair, "Could not resolve variable!"));
@@ -155,7 +155,9 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		Expression body = fn.caddddr(); // fifth elem
 
 		// evaluate arguments if call is not 0-arity.
-		final Expression passedEvaledParamValues = passedParamValues == NIL ? NIL : ((Pair) passedParamValues).stream().map(argsMapper).collect(Pair.collect());
+		final Expression passedEvaledParamValues = passedParamValues == NIL
+				? NIL
+				: ((Pair) passedParamValues).stream().map(argsMapper).collect(Pair.collect());
 
 		// new scope
 		final Map<Variable, Pair> scope = Destructuring
@@ -169,7 +171,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				Pair bindingPair = (Pair) binding;
 				Variable variable = Variable.enforce(bindingPair.car());
 				Expression value = bindingPair.cdr();
-				scope.putIfAbsent(variable, new Pair(variable.getExpression(), value));
+				scope.putIfAbsent(variable, bindingPair); // XXX TODO: maybe clone binding pair here?
 			});
 		}
 
@@ -184,6 +186,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 	@Override
 	public Expression symbol(Symbol symbol) {
 		env.whereClear();
+
 		// lookup order: dynamic, scope, globe, defaults.
 
 		if (symbol == T || symbol == NIL || symbol == O || symbol == APPLY) {
@@ -214,7 +217,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		return character;
 	}
 
-	Expression set(Pair call) {
+	private Expression set(Pair call) {
 		assert Symbol.SET == call.car();
 
 		Expression tail = call.cdr();
@@ -230,7 +233,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			} else {
 				// key is ignored on purpose. location contains index to it!
 				Expression key = pair.car().apply(this);
-				Environment.LastLocation location = env.getLastLocation().orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"));
+				Environment.LastLocation location = env.getLastLocation()
+						.orElseThrow(() -> new EvaluationException(pair.car(), "Can not find location!"));
 				Expression value = last = pair.cadr().apply(this);
 
 				location.update(value);

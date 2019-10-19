@@ -1,6 +1,6 @@
 package io.github.erdos.carillon.objects;
 
-import io.github.erdos.carillon.eval.EvaluationException;
+import io.github.erdos.carillon.eval.EvaluationException.ImproperListException;
 import io.github.erdos.carillon.eval.RT;
 
 import java.util.Collections;
@@ -129,7 +129,7 @@ public final class Pair implements Expression, Iterable<Expression> {
 			if (x instanceof Pair) {
 				return (Pair) x;
 			} else {
-				throw new EvaluationException(x, "This is not a proper list!");
+				throw new ImproperListException(x);
 			}});
 	}
 

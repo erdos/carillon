@@ -33,4 +33,10 @@ public class EvaluationException extends RuntimeException {
 			super(expression, "This feature is not implemented!");
 		}
 	}
+
+	public static final class ImproperListException extends EvaluationException {
+		public ImproperListException(Expression expression) {
+			super(expression, "Proper list expected but last cdr is not nil!");
+		}
+	}
 }
