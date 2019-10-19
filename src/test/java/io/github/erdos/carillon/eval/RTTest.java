@@ -270,6 +270,13 @@ class RTTest {
 	}
 
 	@Test
+	public void testNumberForNth() {
+		assertEquals(read("a"), eval(read("(0 '(a b c))")));
+		assertEquals(read("b"), eval(read("(1 '(a b c))")));
+		assertEquals(read("()"), eval(read("(10 '(a b c))")));
+	}
+
+	@Test
 	public void testDyn() {
 		eval(read("(set x 'a)"));
 		assertEquals(read("(z . b)"), eval(read("(dyn x 'z (join x 'b))")));

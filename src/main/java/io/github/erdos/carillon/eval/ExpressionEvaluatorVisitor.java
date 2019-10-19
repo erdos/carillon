@@ -146,9 +146,28 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return this.appliedTo(macroCallResult);
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
+		} else if (((Pair) head).cadr() == Symbol.NUM) {
+
+			Expression nominatorExpr = ((Pair) ((Pair) head).caddr()).cadr();
+			// TODO: check for sign, denominator, complex part.
+			long nominator = (nominatorExpr == NIL) ? 0 : ((Pair) nominatorExpr).stream().count();
+			Pair arg = (Pair) expression.cadr().apply(this);
+
+			return nthOrNil(arg, (int) nominator);
 		} else {
-			throw new EvaluationException(expression, "We only evaluate MAC or CLO literals!");
+			throw new EvaluationException(expression, "We only evaluate MAC or CLO or NUM literals!");
 		}
+	}
+
+	public Expression nthOrNil(Pair p, int n) {
+		for (int i = 0; i < n; i++) {
+			if (p.cdr() == NIL) {
+				return NIL;
+			} else {
+				p = (Pair) p.cdr();
+			}
+		}
+		return env.whereCar(p);
 	}
 
 	private Expression evalFnCallImpl(Pair fn, Expression passedParamValues, Function<Expression, Expression> argsMapper) {

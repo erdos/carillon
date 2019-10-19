@@ -59,6 +59,26 @@ class BelTest {
 		assertEquals(read("((hello a))"), eval("y"));
 	}
 
+	@Test
+	public void testDrop() {
+		assertEquals(read("(c d e)"), eval("(drop 2 '(a b c d e))"));
+	}
+
+	@Test
+	public void testFirst() {
+		assertEquals(read("(a b)"), eval("(first 2 '(a b c d e))"));
+	}
+
+	@Test
+	public void testNth() {
+		assertEquals(read("b"), eval("(nth 2 '(a b c d e))"));
+	}
+
+	@Test
+	public void testNchar() {
+		assertEquals(read("\\A"), eval("(nchar 65)"));
+	}
+
 	private static Expression eval(String s) {
 		return RT.eval(read(s));
 	}

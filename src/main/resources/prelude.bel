@@ -11,6 +11,8 @@
 (def car (x) (car x))
 (def cdr (x) (cdr x))
 
+(def id (a b) (id a b))
+
 (def xdr (a b) (xdr a b))
 (def xar (a b) (xar a b))
 

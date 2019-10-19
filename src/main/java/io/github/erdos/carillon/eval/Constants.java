@@ -4,13 +4,18 @@ import io.github.erdos.carillon.objects.Character;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Pair;
 
+import java.util.stream.IntStream;
+
+import static io.github.erdos.carillon.eval.RT.pair;
+
 public class Constants {
 
 	public static final Expression CHARS_LIST;
 
 	static {
-		String alphabet = "0123456789,`~@\\()[]; abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-		CHARS_LIST = alphabet.chars().mapToObj(c -> Character.character((char) c)).collect(Pair.collect());
+		CHARS_LIST = IntStream.range(-1, 255).mapToObj(c ->
+			pair(Character.character((char) c),
+					Integer.toBinaryString(c).chars().mapToObj(x -> Character.character((char) x))
+							.collect(Pair.collect()))).collect(Pair.collect());
 	}
 }
