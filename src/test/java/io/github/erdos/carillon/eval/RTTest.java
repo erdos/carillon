@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
 
-import static io.github.erdos.carillon.eval.RT.eval;
 import static io.github.erdos.carillon.eval.RT.list;
 import static io.github.erdos.carillon.eval.RT.pair;
 import static io.github.erdos.carillon.objects.Character.character;
@@ -284,6 +283,14 @@ class RTTest {
 		eval(read("(set x 'a)"));
 		assertEquals(read("(z . b)"), eval(read("(dyn x 'z (join x 'b))")));
 		assertEquals(read("a"), eval(read("x")));
+	}
+
+	private static Expression eval(String s) {
+		return RT.eval(read(s));
+	}
+
+	private static Expression eval(Expression e) {
+		return RT.eval(e);
 	}
 
 	private static Expression read(String s) {

@@ -36,8 +36,21 @@ class BelTest {
 	}
 
 	@Test
+	public void testPushPull() {
+		assertEquals(read("(z a b)"), eval("(let x '(a b c) (push 'z x) (pull 'c x) x)"));
+	}
+
+	@Test
 	public void testSetLocation() {
 		assertEquals(read("(a z c)"), eval("(let x '(a b c) (set (cadr x) 'z) x)"));
+	}
+
+	@Test
+	public void testSet() {
+		assertEquals(read("((a))"), eval("(set x '((a)) y x)"));
+		assertEquals(read("((a))"), eval("y"));
+		assertEquals(read("(hello a)"), eval("(push 'hello (car x))"));
+		assertEquals(read("((hello a))"), eval("y"));
 	}
 
 	private static Expression eval(String s) {
