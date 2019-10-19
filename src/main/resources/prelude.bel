@@ -11,6 +11,9 @@
 (def car (x) (car x))
 (def cdr (x) (cdr x))
 
+(def xdr (a b) (xdr a b))
+(def xar (a b) (xar a b))
+
 (mac lit (x) `(lit ,x))
 
 (mac let (k v body) `((fn (,k) ,body) ,v))

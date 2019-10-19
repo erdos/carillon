@@ -41,6 +41,12 @@ class BelTest {
 	}
 
 	@Test
+	public void testPop() {
+		assertEquals(read("(a (b c))"), eval("(let x '(a b c) (list (pop x) x))"));
+		assertEquals(read("(a c)"), eval("(let x '(a b c)  (pop (cdr x)) x)"));
+	}
+
+	@Test
 	public void testSetLocation() {
 		assertEquals(read("(a z c)"), eval("(let x '(a b c) (set (cadr x) 'z) x)"));
 	}

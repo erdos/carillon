@@ -8,9 +8,16 @@ import io.github.erdos.carillon.objects.Symbol;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.PushbackReader;
+import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import static io.github.erdos.carillon.eval.RT.list;
 import static io.github.erdos.carillon.eval.RT.pair;
+import static io.github.erdos.carillon.objects.Pair.collectPairOrNil;
+import static io.github.erdos.carillon.objects.Symbol.LIT;
+import static io.github.erdos.carillon.objects.Symbol.NIL;
+import static io.github.erdos.carillon.objects.Symbol.T;
+import static io.github.erdos.carillon.objects.Symbol.symbol;
 
 final class SymbolReader {
 
@@ -18,11 +25,24 @@ final class SymbolReader {
 
 	static Expression readSymbol(PushbackReader pbr) throws IOException {
 		String read = readUntilDelimiter(pbr);
-		if (read != null) {
-			return split(read);
-		} else {
+		if (read == null) {
 			return null;
+		} else if (Pattern.matches("[\\+\\-]?\\d+", read)) {
+			return toInteger(read);
+		} else {
+			return split(read);
 		}
+	}
+
+	static Pair toInteger(String read) {
+		int number = Integer.valueOf(read);
+		Symbol sign = number < 0 ? symbol("-") : symbol("+");
+
+		Expression nth = IntStream.range(0, Math.abs(number)).mapToObj(x -> T).collect(collectPairOrNil());
+
+		Pair realPart = list(sign, nth, list(T));
+		Pair complexPart = list(symbol("+"), NIL, list(T));
+		return list(LIT, symbol("num"), realPart, complexPart);
 	}
 
 	static String readUntilDelimiter(PushbackReader pbr) throws IOException {
@@ -64,7 +84,7 @@ final class SymbolReader {
 
 			Expression c = intrasymbolColons(parts[0]);
 			Expression e = split(parts[1]);
-			return list(Symbol.T, c, e);
+			return list(T, c, e);
 		} else if (cs.contains(".") || cs.contains("!")) {
 			String[] parts = cs.split("(\\.|\\!)", 2);
 
@@ -95,11 +115,11 @@ final class SymbolReader {
 		if (s.contains(":")) {
 			String[] parts = s.split("\\:");
 
-			Expression tail = Symbol.NIL;
+			Expression tail = NIL;
 			for (int i = parts.length - 1; i >= 0; i--) {
 				tail = pair(prependedTildes(parts[i]), tail);
 			}
-			return RT.pair(Symbol.symbol("compose"), tail);
+			return RT.pair(symbol("compose"), tail);
 
 		} else {
 			return prependedTildes(s);
@@ -108,9 +128,9 @@ final class SymbolReader {
 
 	private static Expression prependedTildes(String s) {
 		if (s.startsWith("~")) {
-			return RT.list(Symbol.symbol("compose"), Symbol.symbol("no"), prependedTildes(s.substring(1)));
+			return RT.list(symbol("compose"), symbol("no"), prependedTildes(s.substring(1)));
 		} else {
-			return Symbol.symbol(s);
+			return symbol(s);
 		}
 	}
 

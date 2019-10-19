@@ -25,6 +25,7 @@ public final class Symbol implements Expression {
 
 	public static final Symbol LIT = symbol("lit");
 
+	public static final Symbol CLS = symbol("cls");
 
 	public static final Symbol IF = symbol("if");
 	public static final Symbol APPLY = symbol("apply");

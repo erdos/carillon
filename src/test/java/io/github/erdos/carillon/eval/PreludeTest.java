@@ -15,13 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PreludeTest {
 
-
 	public static final Symbol A = symbol("a");
 	public static final Symbol B = symbol("b");
 
-
 	@Test
-	public void testLet() throws IOException {
+	public void testLet() {
 		assertEquals(A, eval(read("(let x 'a (let y 'b x))")));
 		assertEquals(B, eval(read("(let x 'a (let x 'b x))")));
 	}

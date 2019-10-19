@@ -39,6 +39,13 @@ class SymbolReaderTest {
 		assertEquals(ReaderTest.read("(t c (isa 'cont))"), read("c|isa!cont"));
 	}
 
+	@Test
+	public void testNumber1() throws IOException {
+		assertEquals(ReaderTest.read("(lit num (+ () (t)) (+ () (t)))\n"), read("0"));
+		assertEquals(ReaderTest.read("(lit num (- (t t) (t)) (+ () (t)))\n"), read("-2"));
+		assertEquals(ReaderTest.read("(lit num (+ (t t t) (t)) (+ () (t)))\n"), read("3"));
+	}
+
 	private static Expression read(String s) throws IOException {
 		return SymbolReader.readSymbol(new PushbackReader(new StringReader(s)));
 	}

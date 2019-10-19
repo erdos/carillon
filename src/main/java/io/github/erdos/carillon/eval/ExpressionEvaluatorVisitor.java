@@ -60,6 +60,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return specialForms.evalLit(pair);
 		}
 
+		if (Symbol.CLS.equals(sym)) {
+			((Stream) pair.cadr().apply(this)).close();
+		}
+
 		if (Symbol.IF.equals(sym)) {
 			return specialForms.evalIf(pair, this);
 		}

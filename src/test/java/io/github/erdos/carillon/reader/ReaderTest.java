@@ -133,6 +133,7 @@ class ReaderTest {
 	@Test
 	public void readString() throws IOException {
 		assertEquals(read("(\\a \\b \\c)"), read("\"abc\""));
+		assertEquals(read("(\\f \\o \\o \\\" \\b \\a \\r)"), read("\"foo\\\"bar\""));
 		assertEquals(read("()"), read("\"\""));
 	}
 

@@ -88,6 +88,8 @@ public final class Reader {
 					break;
 				} else if (i == -1) {
 					throw new EOFException("End of input while reading string!");
+				} else if (i == '\\') {
+					content.append((char) pbr.read());
 				} else {
 					content.append((char) i);
 				}
