@@ -4,6 +4,7 @@ import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Symbol;
 import io.github.erdos.carillon.reader.Reader;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -87,6 +88,43 @@ class BelTest {
 		// definition of cut is tricky: one optional parameter has a default value based on an other parameter.
 		assertEquals(read("(\\o \\o \\b)"), eval("(cut \"foobar\" 2 4)"));
 		// TODO: also (cut "foobar" 2 -1) -> "ooba"
+	}
+
+	@Test
+	public void testExampleGoodness() {
+		assertEquals(read("10"), eval("(let m (macro (x) (sym (append (nom x) \"ness\"))) (set (m good) 10))"));
+		assertEquals(read("10"), eval("goodness"));
+	}
+
+	@Test
+	public void testDedup() {
+		assertEquals(eval("\"\""), eval("(dedup \"\")"));
+		assertEquals(eval("\"abc\""), eval("(dedup \"aabccc\")"));
+	}
+
+	@Test
+	@Disabled
+	public void testDedupSort() {
+		// assertEquals(read("acd"), eval("(dedup:sort < \"acdc\")"));
+		assertEquals(eval("\"abc\""), eval("(dedup \"aabccc\")"));
+
+		//assertEquals(read("acd"), eval("(dedup:sort < \"ab\")"));
+
+	}
+
+	// TODO: most ez a legfontosabb!
+	@Test
+	@Disabled
+	public void testCharn() {
+		assertEquals(read("64"), eval("(charn \\a)"));
+	}
+
+	@Disabled
+	@Test
+	public void testCompare() {
+		assertEquals(Symbol.T, eval("(< \\a \\b)"));
+		assertEquals(Symbol.NIL, eval("(< \\b \\b)"));
+		assertEquals(Symbol.NIL, eval("(< \\c \\b)"));
 	}
 
 	private static Expression eval(String s) {
