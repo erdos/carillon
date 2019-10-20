@@ -48,13 +48,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression sym = pair.car();
 
-		// TODO: please, consider removing this piece of code.
 		if (Symbol.symbol("err") == sym) {
-			Expression expression = appliedTo(pair.cadr());
-
-			if (expression != NIL) throw new EvaluationException(expression, "Err called!");
-
-			return expression;
+			return specialForms.evalErr(pair, this);
 		}
 
 		if (Symbol.LIT.equals(sym)) {

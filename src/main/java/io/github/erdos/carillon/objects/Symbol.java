@@ -23,6 +23,8 @@ public final class Symbol implements Expression {
 	public static final Symbol INS = symbol("ins");
 	public static final Symbol OUTS = symbol("outs");
 
+	public static final Symbol ERR = symbol("err");
+
 	public static final Symbol LIT = symbol("lit");
 
 	public static final Symbol CLS = symbol("cls");

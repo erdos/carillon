@@ -26,3 +26,9 @@
 (def cddr (x) (cdr (cdr x)))
 
 (def nom (x) (nom x))
+
+(set virfns nil)
+(def err (x) (err x))
+
+(set ins nil)
+(set outs nil)

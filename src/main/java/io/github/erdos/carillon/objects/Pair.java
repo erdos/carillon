@@ -37,7 +37,14 @@ public final class Pair implements Expression, Iterable<Expression> {
 
 	@Override
 	public String toString() {
-		if (first == Symbol.QUOTE && second instanceof Pair && (((Pair) second).second == NIL || ((Pair) second).second == null)) {
+		if (isString()) {
+			return stream().map(x -> ((Character)x).getChar())
+					.collect(Collector.of(
+						StringBuilder::new,
+						StringBuilder::append,
+						StringBuilder::append,
+						x -> "\"" + x.toString() + "\""));
+		} else if (first == Symbol.QUOTE && second instanceof Pair && (((Pair) second).second == NIL || ((Pair) second).second == null)) {
 			return "'" + ((Pair) second).first;
 		} else if (first == NIL && second == NIL) {
 			return "(nil)";
@@ -131,6 +138,26 @@ public final class Pair implements Expression, Iterable<Expression> {
 			} else {
 				throw new ImproperListException(x);
 			}});
+	}
+
+	public boolean isProperList() {
+		Expression p = this;
+		while (p instanceof Pair) {
+			p = ((Pair) p).cdr();
+		}
+		return p == NIL;
+	}
+
+	public boolean isString() {
+		Expression p = this;
+		while (p instanceof Pair) {
+			if (! (((Pair) p).car() instanceof Character)) {
+				return false;
+			} else {
+				p = ((Pair) p).cdr();
+			}
+		}
+		return p == NIL;
 	}
 
 	public static Collector<Expression, State, Expression> collectPairOrNil() {

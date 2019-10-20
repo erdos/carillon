@@ -45,6 +45,18 @@ public class SpecialForms {
 		return lit;
 	}
 
+	public Expression evalErr(Pair lit, ExpressionEvaluatorVisitor visitor) {
+		assert Symbol.ERR.equals(lit.car());
+
+		Expression expression = lit.cadr().apply(visitor);
+
+		if (expression != NIL) {
+			throw new EvaluationException(expression, "Err called!");
+		}
+
+		return expression;
+	}
+
 	public Expression evalApply(Pair lit, ExpressionEvaluatorVisitor visitor) {
 		assert Symbol.APPLY.equals(lit.car());
 		// TODO: this is really not effective.
