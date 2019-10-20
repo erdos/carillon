@@ -32,8 +32,8 @@ final class SymbolReader {
 		}
 	}
 
-	static Pair toInteger(String read) {
-		int number = Integer.valueOf(read);
+	private static Pair toInteger(String read) {
+		int number = Integer.parseInt(read);
 		Symbol sign = number < 0 ? symbol("-") : symbol("+");
 
 		Expression nth = IntStream.range(0, Math.abs(number)).mapToObj(x -> T).collect(collectPairOrNil());

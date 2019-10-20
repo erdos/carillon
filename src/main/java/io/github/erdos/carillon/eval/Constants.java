@@ -13,7 +13,7 @@ public class Constants {
 	public static final Expression CHARS_LIST;
 
 	static {
-		CHARS_LIST = IntStream.range(-1, 128).mapToObj(c ->
+		CHARS_LIST = IntStream.range(0, 128).mapToObj(c ->
 			pair(Character.character((char) c),
 					Integer.toBinaryString(c).chars().mapToObj(x -> Character.character((char) x))
 							.collect(Pair.collect()))).collect(Pair.collect());

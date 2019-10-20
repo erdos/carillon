@@ -159,7 +159,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			long nominator = (nominatorExpr == NIL) ? 0 : ((Pair) nominatorExpr).stream().count();
 			Pair arg = (Pair) expression.cadr().apply(this);
 
-			return nthOrNil(arg, (int) nominator);
+			return nthOrNil(arg, (int) nominator - 1);
 		} else {
 			throw new EvaluationException(expression, "We only evaluate MAC or CLO or NUM literals!");
 		}

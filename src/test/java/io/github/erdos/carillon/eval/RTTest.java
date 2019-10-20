@@ -261,7 +261,7 @@ class RTTest {
 	@Test
 	public void testSetWithNumber() {
 		eval(read("(set x '(a b c))"));
-		assertEquals(read("z"), eval(read("(set (1 x) 'z)")));
+		assertEquals(read("z"), eval(read("(set (2 x) 'z)")));
 		assertEquals(read("(a z c)"), eval(read("x")));
 	}
 
@@ -278,8 +278,9 @@ class RTTest {
 
 	@Test
 	public void testNumberForNth() {
-		assertEquals(read("a"), eval(read("(0 '(a b c))")));
-		assertEquals(read("b"), eval(read("(1 '(a b c))")));
+		// TODO: zero index?
+		assertEquals(read("a"), eval(read("(1 '(a b c))")));
+		assertEquals(read("b"), eval(read("(2 '(a b c))")));
 		assertEquals(read("()"), eval(read("(10 '(a b c))")));
 	}
 
