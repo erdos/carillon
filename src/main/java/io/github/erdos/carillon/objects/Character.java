@@ -1,12 +1,17 @@
 package io.github.erdos.carillon.objects;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class Character implements Expression {
 	private final char c;
 
-	public Character(char c) {this.c = c;}
+	private Character(char c) {this.c = c;}
+
+	private static final Map<java.lang.Character, Character> pool = new ConcurrentHashMap<>();
 
 	public static Character character(char c) {
-		return new Character(c);
+		return pool.computeIfAbsent(c, Character::new);
 	}
 
 	@Override

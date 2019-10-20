@@ -38,7 +38,7 @@ final class CharacterReader {
 				}
 
 				if (wordTail == null) {
-					return new Character((char) read);
+					return Character.character((char) read);
 				} else {
 					final String word = ((char) read) + wordTail;
 					final Character result = charactersByName.get(word);

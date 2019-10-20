@@ -108,9 +108,13 @@ public class SpecialForms {
 		}
 	}
 
-	// where -- wtf
-	// after -- sorrendiseg megtartasa
-	// ccc -- wtf
-	// thread -- wtf
+	public Expression evalCcc(Pair x, Environment env, ExpressionEvaluatorVisitor evaluator) {
+		throw new EvaluationException.FeatureNotImplementedException(Symbol.CCC);
+	}
 
+	public Expression evalThread(Pair x, Environment env, ExpressionEvaluatorVisitor evaluator) {
+		throw new EvaluationException.FeatureNotImplementedException(Symbol.THREAD);
+	}
+
+	// after -- sorrendiseg megtartasa
 }

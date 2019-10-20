@@ -48,7 +48,7 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		Expression sym = pair.car();
 
-		if (Symbol.symbol("err") == sym) {
+		if (Symbol.ERR.equals(sym)) {
 			return specialForms.evalErr(pair, this);
 		}
 
@@ -126,6 +126,14 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 
 		if (Symbol.WHERE.equals(sym)) {
 			return specialForms.evalWhere(pair, env, this);
+		}
+
+		if (Symbol.CCC.equals(sym)) {
+			return specialForms.evalCcc(pair, env, this);
+		}
+
+		if (Symbol.THREAD.equals(sym)) {
+			return specialForms.evalThread(pair, env, this);
 		}
 
 		return evalLitCall(pair);

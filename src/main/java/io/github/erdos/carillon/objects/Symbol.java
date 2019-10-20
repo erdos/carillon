@@ -69,6 +69,10 @@ public final class Symbol implements Expression {
 
 	public static final Symbol WHERE = symbol("where");
 
+	public static final Symbol CCC = symbol("ccc");
+	public static final Symbol THREAD = symbol("thread");
+
+
 	public static Symbol symbol(String name) {
 		Symbol symbol;
 		do {

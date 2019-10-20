@@ -22,7 +22,7 @@ class ReaderTest {
 	@Test
 	public void testReadCharacter() throws IOException {
 		Expression result = read("\\a");
-		Character expected = new Character('a');
+		Character expected = Character.character('a');
 		assertEquals(expected, result);
 	}
 
@@ -34,7 +34,7 @@ class ReaderTest {
 	@Test
 	public void testReadPairOne() throws IOException {
 		Expression result = read("(\\x)");
-		Pair expected = pair(new Character('x'), NIL);
+		Pair expected = pair(Character.character('x'), NIL);
 		assertEquals(expected, result);
 	}
 
