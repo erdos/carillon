@@ -3,6 +3,8 @@ package io.github.erdos.carillon.eval;
 import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Symbol;
 import io.github.erdos.carillon.reader.Reader;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -13,9 +15,10 @@ import java.io.StringReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Tag("manual")
 class BelTest {
 
-	@org.junit.jupiter.api.BeforeAll
+	@BeforeAll
 	public static void setup() {
 
 		try (InputStream stream = RT.class.getResourceAsStream("/bel.bel");

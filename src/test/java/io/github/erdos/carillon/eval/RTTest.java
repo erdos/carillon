@@ -5,7 +5,7 @@ import io.github.erdos.carillon.objects.Expression;
 import io.github.erdos.carillon.objects.Pair;
 import io.github.erdos.carillon.objects.Symbol;
 import io.github.erdos.carillon.reader.Reader;
-import org.junit.Ignore;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
