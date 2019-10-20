@@ -1,15 +1,18 @@
 package io.github.erdos.carillon.eval;
 
 import io.github.erdos.carillon.objects.Expression;
+import io.github.erdos.carillon.objects.Pair;
 import io.github.erdos.carillon.reader.Reader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static io.github.erdos.carillon.eval.Destructuring.destructure;
 import static io.github.erdos.carillon.eval.RT.list;
 import static io.github.erdos.carillon.eval.Variable.enforce;
 import static io.github.erdos.carillon.objects.Symbol.NIL;
@@ -102,5 +105,11 @@ class DestructuringTest {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static Map<Variable, Expression> destructure(Expression name, Expression value, Function<Expression, Expression> mapper) {
+		Map<Variable, Pair> result = new HashMap<>();
+		Destructuring.destructure(name, value, result, mapper);
+		return result.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, x -> x.getValue().cdr()));
 	}
 }

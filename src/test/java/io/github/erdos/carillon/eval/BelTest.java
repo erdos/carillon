@@ -81,6 +81,7 @@ class BelTest {
 
 	@Test
 	public void testCut() {
+		// definition of cut is tricky: one optional parameter has a default value based on an other parameter.
 		assertEquals(read("(\\o \\o \\b)"), eval("(cut \"foobar\" 2 4)"));
 		// TODO: also (cut "foobar" 2 -1) -> "ooba"
 	}
@@ -91,7 +92,8 @@ class BelTest {
 
 	private static Expression read(String s) {
 		try {
-			return new Reader().read(new PushbackReader(new StringReader(s)));
+			new Reader();
+			return Reader.read(new PushbackReader(new StringReader(s)));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

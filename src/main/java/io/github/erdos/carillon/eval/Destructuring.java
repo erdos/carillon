@@ -19,46 +19,30 @@ public final class Destructuring {
 
 	private Destructuring() {}
 
-	public static Map<Variable, Expression> destructureArgs(Expression name, Expression value, Function<Expression, Expression> mapper) {
-
+	public static void destructureArgs(Expression name, Expression value, Function<Expression, Expression> mapper, Map<Variable, Pair> result) {
 		if (name == NIL && value != NIL) {
 			throw new WrongArityException(NIL, value);
 		} else if (name == NIL) {
-			return new HashMap<>();
+			// empty
 		} else if (name instanceof Pair && ((Pair) name).car() instanceof Pair && ((Pair) ((Pair) name).car()).car() == O && value == NIL) {
-			Map<Variable, Expression> result = new HashMap<>();
 			destructureOptionalsTail((Pair) name, result, mapper);
-			return result;
 		} else if (value == NIL && name instanceof Symbol) {
-			Map<Variable, Expression> result = new HashMap<>();
-			result.put(Variable.enforce(name), value);
-			return result;
+			result.put(Variable.enforce(name), new Pair(name, value));
 		} else if (value == NIL) {
 			throw new WrongArityException(name, NIL);
 		} else if (name instanceof Symbol) {
-			Map<Variable, Expression> result = new HashMap<>();
-			result.put(Variable.enforce(name), value);
-			return result;
+			result.put(Variable.enforce(name), new Pair(name, value));
 		} else {
-			Map<Variable, Expression> result = new HashMap<>();
 			destructurePairs((Pair) name, (Pair) value, result, mapper);
-			return result;
 		}
 	}
 
 
-	public static void destructureOptionalsTail(Pair seqOfOptionals, Map<Variable, Expression> mappings, Function<Expression, Expression> mapper) {
+	public static void destructureOptionalsTail(Pair seqOfOptionals, Map<Variable, Pair> mappings, Function<Expression, Expression> mapper) {
 		seqOfOptionals.forEach(opt -> destructureOptional((Pair) opt, Optional.empty(), mappings, mapper));
 	}
 
-
-	public static Map<Variable, Expression> destructure(Expression name, Expression value, Function<Expression, Expression> mapper) {
-		Map<Variable, Expression> result = new HashMap<>();
-		destructure(name, value, result, mapper);
-		return result;
-	}
-
-	private static void destructure(Expression name, Expression value, Map<Variable, Expression> mappings, Function<Expression, Expression> mapper) {
+	protected static void destructure(Expression name, Expression value, Map<Variable, Pair> mappings, Function<Expression, Expression> mapper) {
 
 		if (name == NIL) {
 
@@ -72,7 +56,7 @@ public final class Destructuring {
 		Optional<Variable> var = Variable.of(name);
 
 		if (var.isPresent()) {
-			mappings.put(var.get(), value);
+			mappings.put(var.get(), new Pair(var.get().getExpression(), value));
 		} else {
 			Pair namePair = (Pair) name;
 
@@ -81,7 +65,7 @@ public final class Destructuring {
 			} else if (namePair.car() == T) {
 				destructureTyped(namePair, value, mappings, mapper);
 			} else if (namePair.car().equals(Pair.EMPTY)) {
-				mappings.put(Variable.enforce(namePair), value);
+				mappings.put(Variable.enforce(namePair), new Pair(namePair, value));
 			} else if (namePair.car() instanceof Pair && ((Pair) namePair.car()).car() == O && !(value instanceof Pair)) {
 				// TODO: optional shall be diff?
 				destructureOptional((Pair) namePair.car(), Optional.of(value), mappings, mapper);
@@ -91,7 +75,7 @@ public final class Destructuring {
 		}
 	}
 
-	private static void destructurePairs(Pair name0, Pair value0, Map<Variable, Expression> mappings, Function<Expression, Expression> mapper) {
+	private static void destructurePairs(Pair name0, Pair value0, Map<Variable, Pair> mappings, Function<Expression, Expression> mapper) {
 		Expression nameIterator = name0;
 		Optional<Expression> valueIterator = Optional.of(value0);
 
@@ -113,7 +97,7 @@ public final class Destructuring {
 					destructureTyped(namePair, valueIterator.orElseThrow(evalException(NIL, "Missing value!")), mappings, mapper);
 				}
 			} else if (namePair.car().equals(Pair.EMPTY)) {
-				mappings.put(Variable.enforce(namePair), valueIterator.orElseThrow(evalException(NIL, "Missing value for binding!")));
+				mappings.put(Variable.enforce(namePair), valueIterator.map(value -> new Pair(namePair, value)).orElseThrow(evalException(NIL, "Missing value for binding!")));
 				return;
 			} else if (namePair.car() instanceof Pair && ((Pair) namePair.car()).car() == O) {
 				destructureOptional((Pair) namePair.car(), valueIterator.map(x->(Pair) x).map(Pair::car), mappings, mapper);
@@ -135,12 +119,12 @@ public final class Destructuring {
 		}
 	}
 
-	private static void destructureTyped(Pair name, Expression value, Map<Variable, Expression> mappings, Function<Expression, Expression> mapper) {
+	private static void destructureTyped(Pair name, Expression value, Map<Variable, Pair> mappings, Function<Expression, Expression> mapper) {
 		assert name.car() == T;
 		destructure(name.cadr(), value, mappings, mapper);
 	}
 
-	private static void destructureOptional(Pair name, Optional<Expression> value, Map<Variable, Expression> mappings, Function<Expression, Expression> mapper) {
+	private static void destructureOptional(Pair name, Optional<Expression> value, Map<Variable, Pair> mappings, Function<Expression, Expression> mapper) {
 		assert name.car() == O;
 		Expression actualValue = value.orElse(mapper.apply(name.nthOrNil(2)));
 		destructure(name.cadr(), actualValue, mappings, mapper);

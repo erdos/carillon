@@ -8,6 +8,7 @@ import io.github.erdos.carillon.objects.Pair;
 import io.github.erdos.carillon.objects.Stream;
 import io.github.erdos.carillon.objects.Symbol;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -185,22 +186,22 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 				: ((Pair) passedParamValues).stream().map(argsMapper).collect(Pair.collect());
 
 		// new scope
-		final Map<Variable, Pair> scope = Destructuring
-				.destructureArgs(paramDeclarations, passedEvaledParamValues, argsMapper)
-				.entrySet()
-				.stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, v-> new Pair(v.getKey().getExpression(), v.getValue()))) ;
+		final Map<Variable, Pair> newScope = new HashMap<>();
 
 		if (fn.caddr() != NIL) { // local closure
 			((Pair) fn.caddr()).forEach(binding -> {
 				Pair bindingPair = (Pair) binding;
 				Variable variable = Variable.enforce(bindingPair.car());
-				Expression value = bindingPair.cdr();
-				scope.putIfAbsent(variable, bindingPair); // XXX TODO: maybe clone binding pair here?
+				newScope.put(variable, bindingPair);
 			});
 		}
 
-		return env.withLexicals(scope, () -> body.apply(this));
+		return env.withLexicals(newScope, () ->
+				{
+					Destructuring.destructureArgs(paramDeclarations, passedEvaledParamValues, argsMapper, newScope);
+					return body.apply(this);
+				}
+		);
 	}
 
 	@Override
