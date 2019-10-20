@@ -10,6 +10,7 @@
 (def join ((o x) (o y)) (join x y))
 (def car (x) (car x))
 (def cdr (x) (cdr x))
+(def sym (x) (sym x))
 
 (def id (a b) (id a b))
 
