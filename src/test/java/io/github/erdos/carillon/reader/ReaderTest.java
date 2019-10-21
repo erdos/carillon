@@ -29,6 +29,7 @@ class ReaderTest {
 	@Test
 	public void testReadPairEmpty() throws IOException {
 		assertEquals(NIL, read("()"));
+		assertEquals(NIL, read("(\n)"));
 	}
 
 	@Test

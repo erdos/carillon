@@ -144,7 +144,11 @@ public final class Reader {
 	static Expression readPair(PushbackReader pbr) throws IOException {
 		if (!expectCharacter(pbr, '(')) {
 			return null;
-		} else if (expectCharacter(pbr, ')')) {
+		}
+
+		skipWhitespaces(pbr);
+
+		if (expectCharacter(pbr, ')')) {
 			return NIL;
 		} else {
 			Deque<Expression> expressions = new LinkedList<>();
