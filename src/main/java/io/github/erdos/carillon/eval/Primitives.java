@@ -136,6 +136,11 @@ public class Primitives {
 		throw new EvaluationException.FeatureNotImplementedException(Symbol.SYS);
 	}
 
+	Stream ops(Pair call, ExpressionEvaluatorVisitor evaluator) {
+		assert Symbol.OPS.equals(call.car());
+		throw new EvaluationException.FeatureNotImplementedException(Symbol.OPS);
+	}
+
 	/**
 	 *
 	 10. (wrb x y)

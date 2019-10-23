@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static io.github.erdos.carillon.eval.EvaluationException.evalException;
 import static io.github.erdos.carillon.objects.Symbol.APPLY;
@@ -116,6 +115,10 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 			return primitives.sys(pair, this);
 		}
 
+		if (Symbol.OPS.equals(sym)) {
+			return primitives.ops(pair, this);
+		}
+
 		if (Symbol.SET.equals(sym)) {
 			return set(pair);
 		}
@@ -147,6 +150,8 @@ class ExpressionEvaluatorVisitor implements ExpressionVisitor<Expression> {
 		} else if (((Pair) head).cadr() == Symbol.MAC) {
 			Pair nestedClo = (Pair) ((Pair) head).caddr(); // lit inside mac!
 			Expression macroCallResult = evalFnCallImpl(nestedClo, expression.cdr(), x -> x);
+
+			// TODO: except if result is a symbol and we are in a WHERE form!!!
 			return this.appliedTo(macroCallResult);
 		} else if (((Pair) head).cadr() == Symbol.CLO) {
 			return evalFnCallImpl((Pair) head, expression.cdr(), this::appliedTo);
